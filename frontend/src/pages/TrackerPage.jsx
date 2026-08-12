@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlusCircle, FiList, FiX, FiCheck, FiLogOut } from 'react-icons/fi';
+import { FiCode, FiPlusCircle, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const INITIAL_COLUMNS = [
@@ -20,6 +20,8 @@ function TrackerPage() {
   const [checked, setChecked]     = useState({});
   const [showInput, setShowInput] = useState(false);
   const [newName, setNewName]     = useState('');
+  const [editingColId, setEditingColId] = useState(null);
+  const [editName, setEditName] = useState('');
 
   // DAY column is fixed; remaining columns share the rest equally
   const DAY_WIDTH = 72; // px – fixed, always visible
@@ -44,9 +46,47 @@ function TrackerPage() {
     closeModal();
   };
 
+  const deleteList = (colId) => {
+    setColumns(prev => prev.filter(c => c.id !== colId));
+    setChecked(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(k => {
+        if (k.endsWith(`-${colId}`)) delete next[k];
+      });
+      return next;
+    });
+  };
+
+  const startRename = (colId, currentName) => {
+    setEditingColId(colId);
+    setEditName(currentName);
+  };
+
+  const saveRename = () => {
+    if (!editName.trim()) {
+      setEditingColId(null);
+      return;
+    }
+    setColumns(prev => prev.map(c => 
+      c.id === editingColId ? { ...c, name: editName.trim().toUpperCase() } : c
+    ));
+    setEditingColId(null);
+    setEditName('');
+  };
+
+  const cancelRename = () => {
+    setEditingColId(null);
+    setEditName('');
+  };
+
   const handleKey = (e) => {
     if (e.key === 'Enter') addList();
     if (e.key === 'Escape') closeModal();
+  };
+
+  const handleRenameKey = (e) => {
+    if (e.key === 'Enter') saveRename();
+    if (e.key === 'Escape') cancelRename();
   };
 
   const handleLogout = () => navigate('/');
@@ -123,12 +163,45 @@ function TrackerPage() {
               {columns.map(col => (
                 <th
                   key={col.id}
-                  className="bg-white py-3 md:py-5 px-1 font-bold text-[#323147] text-[9px] md:text-xs tracking-wider border-r border-[#e4e3f2] select-none"
+                  className="relative group bg-white py-3 md:py-5 px-1 font-bold text-[#323147] text-[9px] md:text-xs tracking-wider border-r border-[#e4e3f2] select-none"
                 >
-                  <div className="flex flex-col items-center justify-center gap-0.5 md:gap-1">
-                    <col.Icon style={{ color: col.color }} className="text-sm md:text-base shrink-0" />
-                    <span className="truncate max-w-full px-0.5">{col.name}</span>
-                  </div>
+                  {editingColId === col.id ? (
+                    <div className="flex flex-col items-center justify-center w-full px-1">
+                      <input 
+                        autoFocus
+                        value={editName}
+                        onChange={e => setEditName(e.target.value)}
+                        onKeyDown={handleRenameKey}
+                        onBlur={saveRename}
+                        className="w-full text-center border-b-2 border-[#7c3aed] outline-none text-[9px] md:text-xs uppercase bg-transparent text-[#323147]"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center justify-center gap-0.5 md:gap-1 transition-opacity duration-200 group-hover:opacity-10">
+                        <col.Icon style={{ color: col.color }} className="text-sm md:text-base shrink-0" />
+                        <span className="truncate max-w-full px-0.5">{col.name}</span>
+                      </div>
+                      
+                      {/* Hover Actions */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-1.5 md:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 backdrop-blur-[1px] z-10">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); startRename(col.id, col.name); }}
+                          className="p-1.5 md:p-2 bg-[#f2f1fb] text-[#7c3aed] rounded-full hover:bg-[#7c3aed] hover:text-white transition-all scale-90 hover:scale-100 shadow-sm"
+                          title="Rename"
+                        >
+                          <FiEdit2 className="text-[10px] md:text-xs stroke-[2.5]" />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteList(col.id); }}
+                          className="p-1.5 md:p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all scale-90 hover:scale-100 shadow-sm"
+                          title="Delete"
+                        >
+                          <FiTrash2 className="text-[10px] md:text-xs stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </th>
               ))}
 
