@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
-  @apply bg-slate-100 text-slate-800 antialiased font-sans min-h-screen flex items-center justify-center p-4 md:p-8;
+  @apply bg-slate-100 text-slate-800 antialiased font-sans;
 }
