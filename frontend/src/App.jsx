@@ -19,9 +19,10 @@ function App() {
   const [showInput, setShowInput] = useState(false);
   const [newName, setNewName]     = useState('');
 
-  // Equal width for every column: DAY + dynamic columns + NEW LIST
-  const totalCols = columns.length + 2;
-  const colWidth  = `${(100 / totalCols).toFixed(4)}%`;
+  // DAY column is fixed; remaining columns share the rest equally
+  const DAY_WIDTH  = 72;  // px – fixed, always visible
+  const restCols   = columns.length + 1; // list columns + NEW LIST
+  const colWidth   = `calc((100% - ${DAY_WIDTH}px) / ${restCols})`;
 
   const toggleCheck = (day, colId) => {
     const key = `${day}-${colId}`;
@@ -99,8 +100,8 @@ function App() {
       <div className="w-full h-full overflow-hidden">
         <table className="w-full h-full border-collapse text-center table-fixed">
           <colgroup>
-            {/* DAY column */}
-            <col style={{ width: colWidth }} />
+            {/* DAY column — fixed narrow width */}
+            <col style={{ width: DAY_WIDTH, minWidth: DAY_WIDTH }} />
             {/* Dynamic list columns */}
             {columns.map(col => <col key={col.id} style={{ width: colWidth }} />)}
             {/* NEW LIST column */}
@@ -110,7 +111,7 @@ function App() {
           <thead>
             <tr className="border-b border-[#e4e3f2]">
               {/* DAY header */}
-              <th className="bg-[#f2f1fb] py-3 md:py-5 px-1 font-bold text-[#323147] text-[9px] md:text-xs tracking-wider border-r border-[#e4e3f2] select-none">
+              <th className="bg-[#f2f1fb] py-3 md:py-4 px-1 font-bold text-[#323147] text-[9px] tracking-widest border-r border-[#e4e3f2] select-none" style={{ width: DAY_WIDTH, minWidth: DAY_WIDTH }}>
                 DAY
               </th>
 
@@ -143,8 +144,8 @@ function App() {
           <tbody>
             {DAYS.map(day => (
               <tr key={day} className="border-b border-[#e4e3f2] last:border-b-0">
-                {/* DAY label */}
-                <td className="bg-[#f2f1fb] py-2 md:py-4 px-1 font-bold text-[#323147] text-[9px] md:text-xs tracking-wider border-r border-[#e4e3f2] select-none">
+                {/* DAY label — fixed width */}
+                <td className="bg-[#f2f1fb] py-2 md:py-3 px-1 font-bold text-[#323147] text-[9px] tracking-widest border-r border-[#e4e3f2] select-none" style={{ width: DAY_WIDTH, minWidth: DAY_WIDTH }}>
                   {day}
                 </td>
 
