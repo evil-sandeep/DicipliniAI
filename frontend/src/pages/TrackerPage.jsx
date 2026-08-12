@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlusCircle, FiUpload, FiList, FiX, FiCheck, FiLogOut } from 'react-icons/fi';
+import { FiCode, FiPlusCircle, FiList, FiX, FiCheck, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const INITIAL_COLUMNS = [
@@ -195,26 +195,6 @@ function TrackerPage() {
           className="w-9 h-9 rounded-full bg-[#f2f1fb] text-[#7c3aed] flex items-center justify-center shadow hover:bg-[#ebe9f8] hover:scale-105 active:scale-95 transition-all"
         >
           <FiLogOut className="text-sm stroke-[2.5]" />
-        </button>
-      </div>
-
-      {/* Edit — bottom left */}
-      <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-20">
-        <button
-          disabled
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#9da1b4]/90 text-white flex items-center justify-center text-xs md:text-sm font-bold shadow-lg hover:bg-[#868aa0] hover:scale-105 active:scale-95 transition-all cursor-not-allowed"
-        >
-          Edit
-        </button>
-      </div>
-
-      {/* Upload — bottom right */}
-      <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-20">
-        <button
-          disabled
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#9da1b4]/90 text-white flex items-center justify-center shadow-lg hover:bg-[#868aa0] hover:scale-105 active:scale-95 transition-all cursor-not-allowed"
-        >
-          <FiUpload className="text-lg md:text-xl stroke-[2.5]" />
         </button>
       </div>
     </div>
