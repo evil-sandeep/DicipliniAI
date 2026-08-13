@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlusCircle, FiUpload, FiList, FiX, FiCheck, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiCode, FiPlusCircle, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 const INITIAL_COLUMNS = [
   { id: 'yt',   name: 'YT',   Icon: FaYoutube, color: '#ff0000' },
@@ -13,7 +14,8 @@ const DAYS = [
   'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
 ];
 
-function App() {
+function TrackerPage() {
+  const navigate = useNavigate();
   const [columns, setColumns]     = useState(INITIAL_COLUMNS);
   const [checked, setChecked]     = useState({});
   const [showInput, setShowInput] = useState(false);
@@ -22,9 +24,9 @@ function App() {
   const [editName, setEditName] = useState('');
 
   // DAY column is fixed; remaining columns share the rest equally
-  const DAY_WIDTH  = 72;  // px – fixed, always visible
-  const restCols   = columns.length + 1; // list columns + NEW LIST
-  const colWidth   = `calc((100% - ${DAY_WIDTH}px) / ${restCols})`;
+  const DAY_WIDTH = 72; // px – fixed, always visible
+  const restCols  = columns.length + 1; // list columns + NEW LIST
+  const colWidth  = `calc((100% - ${DAY_WIDTH}px) / ${restCols})`;
 
   const toggleCheck = (day, colId) => {
     const key = `${day}-${colId}`;
@@ -42,11 +44,6 @@ function App() {
       { id: `list-${Date.now()}`, name, Icon: FiList, color: '#7c3aed' },
     ]);
     closeModal();
-  };
-
-  const handleKey = (e) => {
-    if (e.key === 'Enter') addList();
-    if (e.key === 'Escape') closeModal();
   };
 
   const deleteList = (colId) => {
@@ -82,10 +79,17 @@ function App() {
     setEditName('');
   };
 
+  const handleKey = (e) => {
+    if (e.key === 'Enter') addList();
+    if (e.key === 'Escape') closeModal();
+  };
+
   const handleRenameKey = (e) => {
     if (e.key === 'Enter') saveRename();
     if (e.key === 'Escape') cancelRename();
   };
+
+  const handleLogout = () => navigate('/');
 
   return (
     <div className="w-full h-full bg-white relative overflow-hidden flex flex-col">
@@ -256,43 +260,18 @@ function App() {
       </div>
 
       {/* ── Floating Buttons ── */}
-      <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 z-20">
+      {/* Logout — top right */}
+      <div className="absolute top-3 right-3 z-20">
         <button
-          disabled
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#9da1b4]/90 text-white flex items-center justify-center text-xs md:text-sm font-bold shadow-lg hover:bg-[#868aa0] hover:scale-105 active:scale-95 transition-all cursor-not-allowed"
+          onClick={handleLogout}
+          title="Logout"
+          className="w-9 h-9 rounded-full bg-[#f2f1fb] text-[#7c3aed] flex items-center justify-center shadow hover:bg-[#ebe9f8] hover:scale-105 active:scale-95 transition-all"
         >
-          Edit
-        </button>
-      </div>
-
-      <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-20">
-        <button
-          disabled
-          className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[#9da1b4]/90 text-white flex items-center justify-center shadow-lg hover:bg-[#868aa0] hover:scale-105 active:scale-95 transition-all cursor-not-allowed"
-        >
-          <FiUpload className="text-lg md:text-xl stroke-[2.5]" />
+          <FiLogOut className="text-sm stroke-[2.5]" />
         </button>
       </div>
     </div>
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage     from './pages/HomePage';
-import LoginPage    from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import TrackerPage  from './pages/TrackerPage';
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/"         element={<HomePage />}     />
-        <Route path="/login"    element={<LoginPage />}    />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/tracker"  element={<TrackerPage />}  />
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
   );
 }
 
-export default App;
+export default TrackerPage;
