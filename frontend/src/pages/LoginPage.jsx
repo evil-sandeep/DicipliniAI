@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
+import { GoogleLogin } from '@react-oauth/google';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -28,6 +29,32 @@ function LoginPage() {
     }, 900);
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const res = await fetch('http://localhost:5000/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Google Auth failed');
+      
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setLoading(false);
+      navigate('/tracker');
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google Sign In was unsuccessful. Try again later.');
+  };
+
   return (
     <div className="home-page w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
 
@@ -46,7 +73,22 @@ function LoginPage() {
         <h1 className="auth-title">Welcome back</h1>
         <p className="auth-sub">Sign in to continue your streak</p>
 
-        <form onSubmit={handleSubmit} className="mt-7 flex flex-col gap-4">
+        <div className="mt-6 w-full flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="filled_black"
+            shape="pill"
+          />
+        </div>
+
+        <div className="mt-6 flex items-center gap-3">
+          <div className="flex-1 h-px bg-white/10"></div>
+          <span className="text-sm text-white/40">or continue with email</span>
+          <div className="flex-1 h-px bg-white/10"></div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
           {/* Email */}
           <div className="input-group">
             <FiMail className="input-icon" />
