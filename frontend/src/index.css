@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Kalam:wght@300;400;700&display=swap');
 
 /* ─── Reset ─────────────────────────────────────────── */
 html,
@@ -10,11 +10,11 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Kalam', cursive;
 }
 
 body {
-  @apply antialiased text-slate-800;
+  @apply antialiased text-[#373449];
   background: #0f0c29;
 }
 
