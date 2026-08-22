@@ -19,6 +19,10 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/tracker', trackerRoutes);
 
+app.get('/', (req, res) => {
+  res.send('API is running...');
+});
+
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {

@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
 import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
 
-const API = 'http://localhost:5000/api/tracker';
+const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
   { id: 'yt',   name: 'YT',   sub: 'YouTube',  iconName: 'FaYoutube', Icon: FaYoutube, color: '#ef4444', bg: '#fef2f2' },
