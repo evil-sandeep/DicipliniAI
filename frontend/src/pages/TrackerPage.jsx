@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3 } from 'react-icons/fi';
+import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3, FiDownload } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
+import { downloadExpensePDF } from '../utils/generateExpensePdf';
 
 const API = `${API_BASE_URL}/api/tracker`;
 
@@ -816,12 +817,21 @@ export default function TrackerPage() {
                       <p className="text-[11px] text-[#64748b]">Track budget, daily spends & remaining balance</p>
                     </div>
 
-                    <button
-                      onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0"
-                    >
-                      <FiEdit3 size={12} /> Set Budget
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => downloadExpensePDF({ monthlyBudget, expenses, user })}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#eef2ff] border border-[#c7d2fe] rounded-xl text-xs font-bold text-[#4f46e5] hover:bg-[#e0e7ff] transition-all shadow-sm shrink-0 cursor-pointer"
+                        title="Download PDF Expense Statement"
+                      >
+                        <FiDownload size={12} /> Download PDF
+                      </button>
+                      <button
+                        onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0"
+                      >
+                        <FiEdit3 size={12} /> Set Budget
+                      </button>
+                    </div>
                   </div>
 
                   {/* 3 Summary Cards */}
@@ -949,9 +959,18 @@ export default function TrackerPage() {
                     <h3 className="text-xs font-bold text-[#64748b] tracking-wider uppercase flex items-center gap-1.5">
                       <span>📋</span> EXPENSE HISTORY
                     </h3>
-                    <span className="text-[11px] font-semibold text-[#10b981] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
-                      {expenses.length} Entries
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => downloadExpensePDF({ monthlyBudget, expenses, user })}
+                        className="flex items-center gap-1 px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+                        title="Export PDF Statement"
+                      >
+                        <FiDownload size={11} /> Export PDF
+                      </button>
+                      <span className="text-[11px] font-semibold text-[#10b981] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                        {expenses.length} Entries
+                      </span>
+                    </div>
                   </div>
 
                   {/* Scrollable list container */}
