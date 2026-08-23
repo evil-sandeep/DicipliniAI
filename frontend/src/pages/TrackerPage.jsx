@@ -7,16 +7,16 @@ import { API_BASE_URL } from '../config';
 const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
-  { id: 'yt',   name: 'YT',   sub: 'YouTube',  iconName: 'FaYoutube', Icon: FaYoutube, color: '#ef4444', bg: '#fef2f2' },
-  { id: 'dsa',  name: 'DSA',  sub: 'Practice', iconName: 'FiCode',    Icon: FiCode,    color: '#6366f1', bg: '#eef2ff' },
-  { id: 'walk', name: 'WALK', sub: '30 min',   iconName: 'FaWalking', Icon: FaWalking, color: '#22c55e', bg: '#f0fdf4' },
+  { id: 'yt', name: 'YT', sub: 'YouTube', iconName: 'FaYoutube', Icon: FaYoutube, color: '#ef4444', bg: '#fef2f2' },
+  { id: 'dsa', name: 'DSA', sub: 'Practice', iconName: 'FiCode', Icon: FiCode, color: '#6366f1', bg: '#eef2ff' },
+  { id: 'walk', name: 'WALK', sub: '30 min', iconName: 'FaWalking', Icon: FaWalking, color: '#22c55e', bg: '#f0fdf4' },
 ];
 
 const ICON_MAP = {
   FaYoutube: { Icon: FaYoutube, bg: '#fef2f2', color: '#ef4444' },
-  FiCode:    { Icon: FiCode,    bg: '#eef2ff', color: '#6366f1' },
+  FiCode: { Icon: FiCode, bg: '#eef2ff', color: '#6366f1' },
   FaWalking: { Icon: FaWalking, bg: '#f0fdf4', color: '#22c55e' },
-  FiList:    { Icon: FiList,    bg: '#f3f0ff', color: '#6366f1' },
+  FiList: { Icon: FiList, bg: '#f3f0ff', color: '#6366f1' },
 };
 
 function hydrateColumns(rawCols) {
@@ -45,13 +45,13 @@ function getEmojiForHabit(name) {
   if (upper.includes('MUSIC') || upper.includes('SING') || upper.includes('PIANO') || upper.includes('GUITAR') || upper.includes('SONG')) return '🎵';
   if (upper.includes('DANCE')) return '💃';
   if (upper.includes('CALL') || upper.includes('TALK') || upper.includes('MEET') || upper.includes('PHONE')) return '📞';
-  
+
   const fallbacks = ['🎯', '✨', '🔥', '🚀', '📌', '⚡', '📝', '🌟'];
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return fallbacks[hash % fallbacks.length];
 }
 
-const WEEK_DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY','SUNDAY'];
+const WEEK_DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
 function getWeekDates(weekOffset = 0) {
   const now = new Date();
@@ -78,56 +78,56 @@ function getWeekLabel(weekOffset = 0) {
 
 const CATEGORY_STYLES = {
   Personal: { bg: '#eef2ff', text: '#6366f1', border: '#c7d2fe', emoji: '👤' },
-  Work:     { bg: '#fdf2f8', text: '#ec4899', border: '#fbcfe8', emoji: '💼' },
-  Study:    { bg: '#fffbeb', text: '#d97706', border: '#fde68a', emoji: '📚' },
-  Health:   { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', emoji: '🏃' },
-  Urgent:   { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '⚡' },
+  Work: { bg: '#fdf2f8', text: '#ec4899', border: '#fbcfe8', emoji: '💼' },
+  Study: { bg: '#fffbeb', text: '#d97706', border: '#fde68a', emoji: '📚' },
+  Health: { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', emoji: '🏃' },
+  Urgent: { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '⚡' },
 };
 
 const EXPENSE_CATEGORIES = {
   Shopping: { bg: '#fdf2f8', text: '#db2777', border: '#fbcfe8', emoji: '🛍️' },
-  Food:     { bg: '#fffbeb', text: '#d97706', border: '#fde68a', emoji: '🍔' },
-  Bills:    { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '💳' },
-  Travel:   { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', emoji: '🚗' },
-  Others:   { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe', emoji: '📦' },
+  Food: { bg: '#fffbeb', text: '#d97706', border: '#fde68a', emoji: '🍔' },
+  Bills: { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '💳' },
+  Travel: { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', emoji: '🚗' },
+  Others: { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe', emoji: '📦' },
 };
 
 export default function TrackerPage() {
   const navigate = useNavigate();
-  const [columns, setColumns]           = useState(INITIAL_COLUMNS);
-  const [checked, setChecked]           = useState({});
-  const [showInput, setShowInput]       = useState(false);
-  const [newName, setNewName]           = useState('');
+  const [columns, setColumns] = useState(INITIAL_COLUMNS);
+  const [checked, setChecked] = useState({});
+  const [showInput, setShowInput] = useState(false);
+  const [newName, setNewName] = useState('');
   const [editingColId, setEditingColId] = useState(null);
-  const [editName, setEditName]         = useState('');
-  const [weekOffset, setWeekOffset]     = useState(0);
-  const [loadingData, setLoadingData]   = useState(true);
-  const [saving, setSaving]             = useState(false);
-  const [user, setUser]                 = useState(null);
+  const [editName, setEditName] = useState('');
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [user, setUser] = useState(null);
   const [animatingKey, setAnimatingKey] = useState(null);
 
   // ── Notebook Tab & To-Do State ───────────────────────
-  const [activeTab, setActiveTab]       = useState('THIS WEEK');
-  const [todos, setTodos]               = useState([
+  const [activeTab, setActiveTab] = useState('THIS WEEK');
+  const [todos, setTodos] = useState([
     { id: '1', text: 'Review daily study goals', completed: false, category: 'Study', createdAt: new Date().toISOString() },
     { id: '2', text: 'Drink 2L water & 30 min walk', completed: true, category: 'Health', createdAt: new Date().toISOString() },
   ]);
-  const [newTodoText, setNewTodoText]   = useState('');
-  const [newTodoCat, setNewTodoCat]     = useState('Personal');
-  const [todoFilter, setTodoFilter]     = useState('all');
-  const [notesText, setNotesText]       = useState('📌 Quick Notes & Ideas:\n- Focus on consistency over intensity.\n- Small daily wins build big habits.');
+  const [newTodoText, setNewTodoText] = useState('');
+  const [newTodoCat, setNewTodoCat] = useState('Personal');
+  const [todoFilter, setTodoFilter] = useState('all');
+  const [notesText, setNotesText] = useState('📌 Quick Notes & Ideas:\n- Focus on consistency over intensity.\n- Small daily wins build big habits.');
 
   // ── Monthly Expense State ────────────────────────────
   const [monthlyBudget, setMonthlyBudget] = useState(25000);
-  const [expenses, setExpenses]           = useState([
-    { id: 'exp-1', title: 'Shopping', amount: 500, category: 'Shopping', date: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() }
+  const [expenses, setExpenses] = useState([
+    { id: 'exp-1', title: 'Shopping', amount: 0, category: 'Shopping', date: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() }
   ]);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
-  const [budgetInput, setBudgetInput]         = useState('');
-  const [expenseTitle, setExpenseTitle]       = useState('');
-  const [expenseAmount, setExpenseAmount]     = useState('');
-  const [expenseCat, setExpenseCat]           = useState('Shopping');
-  const [expenseDate, setExpenseDate]         = useState(new Date().toISOString().split('T')[0]);
+  const [budgetInput, setBudgetInput] = useState('');
+  const [expenseTitle, setExpenseTitle] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCat, setExpenseCat] = useState('Shopping');
+  const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
 
   const saveTimerRef = useRef(null);
   const getToken = () => localStorage.getItem('token');
@@ -282,7 +282,7 @@ export default function TrackerPage() {
   // ── Habit Progress ───────────────────────────────────
   const days = getWeekDates(weekOffset);
   const weekLabel = getWeekLabel(weekOffset);
-  const totalCells   = days.length * columns.length;
+  const totalCells = days.length * columns.length;
   const checkedCount = days.reduce((count, day) => {
     columns.forEach(col => {
       const key = `${day.iso}-${col.id}`;
@@ -290,7 +290,7 @@ export default function TrackerPage() {
     });
     return count;
   }, 0);
-  const pct          = totalCells === 0 ? 0 : Math.round((checkedCount / totalCells) * 100);
+  const pct = totalCells === 0 ? 0 : Math.round((checkedCount / totalCells) * 100);
   const circumference = 2 * Math.PI * 26;
 
   // ── Handlers ─────────────────────────────────────────
@@ -308,13 +308,13 @@ export default function TrackerPage() {
     saveToBackend(columns, newChecked, todos, monthlyBudget, expenses);
   };
 
-  const openModal  = () => { setNewName(''); setShowInput(true); };
+  const openModal = () => { setNewName(''); setShowInput(true); };
   const closeModal = () => setShowInput(false);
 
   const addList = () => {
     const name = newName.trim().toUpperCase();
     if (!name) return;
-    
+
     const emoji = getEmojiForHabit(name);
     const colors = [
       { color: '#6366f1', bg: '#eef2ff' },
@@ -327,15 +327,15 @@ export default function TrackerPage() {
     const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const colorScheme = colors[hash % colors.length];
 
-    const newCol = { 
-      id: `list-${Date.now()}`, 
-      name, 
-      sub: 'Habit', 
-      iconName: emoji, 
+    const newCol = {
+      id: `list-${Date.now()}`,
+      name,
+      sub: 'Habit',
+      iconName: emoji,
       color: colorScheme.color,
       bg: colorScheme.bg
     };
-    
+
     const newColumns = [...columns, newCol];
     setColumns(newColumns);
     saveToBackend(newColumns, checked, todos, monthlyBudget, expenses);
@@ -351,9 +351,9 @@ export default function TrackerPage() {
     saveToBackend(newColumns, newChecked, todos, monthlyBudget, expenses);
   };
 
-  const startRename  = (id, name) => { setEditingColId(id); setEditName(name); };
-  const cancelRename = ()         => { setEditingColId(null); setEditName(''); };
-  const saveRename   = () => {
+  const startRename = (id, name) => { setEditingColId(id); setEditName(name); };
+  const cancelRename = () => { setEditingColId(null); setEditName(''); };
+  const saveRename = () => {
     if (!editName.trim()) { cancelRename(); return; }
     const newColumns = columns.map(c => c.id === editingColId ? { ...c, name: editName.trim().toUpperCase() } : c);
     setColumns(newColumns);
@@ -361,12 +361,12 @@ export default function TrackerPage() {
     cancelRename();
   };
 
-  const handleKey       = e => { if (e.key === 'Enter') addList();    if (e.key === 'Escape') closeModal();    };
+  const handleKey = e => { if (e.key === 'Enter') addList(); if (e.key === 'Escape') closeModal(); };
   const handleRenameKey = e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') cancelRename(); };
-  const handleLogout    = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); };
+  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); };
 
   const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'MONTHLY EXP', 'STATS', 'GOALS', 'NOTES'];
-  const TAB_COLORS    = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
+  const TAB_COLORS = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
 
   const filteredTodos = todos.filter(t => {
     if (todoFilter === 'active') return !t.completed;
@@ -403,7 +403,7 @@ export default function TrackerPage() {
             </button>
             <h3 className="text-base font-bold text-[#172554] mb-1">Add New Habit</h3>
             <p className="text-xs text-[#7c8499] mb-4">Enter habit title (e.g. Gym, Reading, Code)</p>
-            
+
             <input
               autoFocus
               type="text"
@@ -441,7 +441,7 @@ export default function TrackerPage() {
             </button>
             <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
             <p className="text-xs text-[#7c8499] mb-4">Enter your total budget for this month (e.g. 25000)</p>
-            
+
             <form onSubmit={handleSaveBudget}>
               <div className="relative mb-4">
                 <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
@@ -806,7 +806,7 @@ export default function TrackerPage() {
             {/* TAB 3: MONTHLY EXPENSE VIEW */}
             {activeTab === 'MONTHLY EXP' && (
               <div className="p-6 max-w-3xl mx-auto flex flex-col h-full gap-5">
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e1]">
                   <div>
@@ -849,13 +849,12 @@ export default function TrackerPage() {
                   </div>
 
                   {/* Remaining Balance Card */}
-                  <div className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-all ${
-                    remainingBalance < 0
+                  <div className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-all ${remainingBalance < 0
                       ? 'bg-red-50 border-red-200 text-red-700'
                       : remainingBalance <= monthlyBudget * 0.2
                         ? 'bg-amber-50 border-amber-200 text-amber-800'
                         : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  }`}>
+                    }`}>
                     <div className="flex items-center justify-between text-xs font-semibold">
                       <span>Remaining Balance</span>
                       <FiCreditCard />
@@ -874,9 +873,8 @@ export default function TrackerPage() {
                   </div>
                   <div className="w-full h-3 bg-[#f1f5f9] rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        spentPercentage > 90 ? 'bg-red-500' : spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`}
+                      className={`h-full rounded-full transition-all duration-500 ${spentPercentage > 90 ? 'bg-red-500' : spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                        }`}
                       style={{ width: `${spentPercentage}%` }}
                     />
                   </div>
