@@ -15,6 +15,15 @@ const todoSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { _id: false });
 
+const expenseSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  title: { type: String, required: true },
+  amount: { type: Number, required: true },
+  category: { type: String, default: 'Others' },
+  date: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const trackerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,7 +37,9 @@ const trackerSchema = new mongoose.Schema({
     of: Boolean,
     default: {}
   },
-  todos: [todoSchema]
+  todos: [todoSchema],
+  monthlyBudget: { type: Number, default: 0 },
+  expenses: [expenseSchema]
 }, { timestamps: true });
 
 export default mongoose.model('Tracker', trackerSchema);

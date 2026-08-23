@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText } from 'react-icons/fi';
+import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3 } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 
@@ -84,6 +84,14 @@ const CATEGORY_STYLES = {
   Urgent:   { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '⚡' },
 };
 
+const EXPENSE_CATEGORIES = {
+  Shopping: { bg: '#fdf2f8', text: '#db2777', border: '#fbcfe8', emoji: '🛍️' },
+  Food:     { bg: '#fffbeb', text: '#d97706', border: '#fde68a', emoji: '🍔' },
+  Bills:    { bg: '#fef2f2', text: '#dc2626', border: '#fecaca', emoji: '💳' },
+  Travel:   { bg: '#f0fdf4', text: '#16a34a', border: '#bbf7d0', emoji: '🚗' },
+  Others:   { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe', emoji: '📦' },
+};
+
 export default function TrackerPage() {
   const navigate = useNavigate();
   const [columns, setColumns]           = useState(INITIAL_COLUMNS);
@@ -108,6 +116,18 @@ export default function TrackerPage() {
   const [newTodoCat, setNewTodoCat]     = useState('Personal');
   const [todoFilter, setTodoFilter]     = useState('all');
   const [notesText, setNotesText]       = useState('📌 Quick Notes & Ideas:\n- Focus on consistency over intensity.\n- Small daily wins build big habits.');
+
+  // ── Monthly Expense State ────────────────────────────
+  const [monthlyBudget, setMonthlyBudget] = useState(25000);
+  const [expenses, setExpenses]           = useState([
+    { id: 'exp-1', title: 'Shopping', amount: 500, category: 'Shopping', date: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() }
+  ]);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetInput, setBudgetInput]         = useState('');
+  const [expenseTitle, setExpenseTitle]       = useState('');
+  const [expenseAmount, setExpenseAmount]     = useState('');
+  const [expenseCat, setExpenseCat]           = useState('Shopping');
+  const [expenseDate, setExpenseDate]         = useState(new Date().toISOString().split('T')[0]);
 
   const saveTimerRef = useRef(null);
   const getToken = () => localStorage.getItem('token');
@@ -138,13 +158,19 @@ export default function TrackerPage() {
         if (data.todos && data.todos.length > 0) {
           setTodos(data.todos);
         }
+        if (data.monthlyBudget !== undefined && data.monthlyBudget !== null) {
+          setMonthlyBudget(data.monthlyBudget);
+        }
+        if (data.expenses && data.expenses.length > 0) {
+          setExpenses(data.expenses);
+        }
       })
       .catch(err => console.error('Failed to load tracker data:', err))
       .finally(() => setLoadingData(false));
   }, [navigate]);
 
   // ── Auto-save to backend ─────────────────────────────
-  const saveToBackend = useCallback((newColumns, newChecked, newTodos = todos) => {
+  const saveToBackend = useCallback((newColumns, newChecked, newTodos = todos, newBudget = monthlyBudget, newExpenses = expenses) => {
     const token = getToken();
     if (!token) return;
 
@@ -159,7 +185,13 @@ export default function TrackerPage() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ columns: serialisableCols, checked: newChecked, todos: newTodos }),
+          body: JSON.stringify({
+            columns: serialisableCols,
+            checked: newChecked,
+            todos: newTodos,
+            monthlyBudget: newBudget,
+            expenses: newExpenses
+          }),
         });
       } catch (err) {
         console.error('Save failed:', err);
@@ -167,7 +199,7 @@ export default function TrackerPage() {
         setSaving(false);
       }
     }, 800);
-  }, [todos]);
+  }, [todos, monthlyBudget, expenses]);
 
   // ── To-Do Handlers ────────────────────────────────────
   const handleAddTodo = (e) => {
@@ -183,26 +215,69 @@ export default function TrackerPage() {
     const updatedTodos = [item, ...todos];
     setTodos(updatedTodos);
     setNewTodoText('');
-    saveToBackend(columns, checked, updatedTodos);
+    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses);
   };
 
   const handleToggleTodo = (id) => {
     const updatedTodos = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
     setTodos(updatedTodos);
-    saveToBackend(columns, checked, updatedTodos);
+    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses);
   };
 
   const handleDeleteTodo = (id) => {
     const updatedTodos = todos.filter(t => t.id !== id);
     setTodos(updatedTodos);
-    saveToBackend(columns, checked, updatedTodos);
+    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses);
   };
 
   const handleClearCompleted = () => {
     const updatedTodos = todos.filter(t => !t.completed);
     setTodos(updatedTodos);
-    saveToBackend(columns, checked, updatedTodos);
+    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses);
   };
+
+  // ── Monthly Expense Handlers ─────────────────────────
+  const handleSaveBudget = (e) => {
+    if (e) e.preventDefault();
+    const parsed = Number(budgetInput);
+    if (isNaN(parsed) || parsed < 0) return;
+    setMonthlyBudget(parsed);
+    setShowBudgetModal(false);
+    setBudgetInput('');
+    saveToBackend(columns, checked, todos, parsed, expenses);
+  };
+
+  const handleAddExpense = (e) => {
+    if (e) e.preventDefault();
+    const amt = Number(expenseAmount);
+    if (!expenseTitle.trim() || isNaN(amt) || amt <= 0) return;
+
+    const newExp = {
+      id: `exp-${Date.now()}`,
+      title: expenseTitle.trim(),
+      amount: amt,
+      category: expenseCat,
+      date: expenseDate || new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedExpenses = [newExp, ...expenses];
+    setExpenses(updatedExpenses);
+    setExpenseTitle('');
+    setExpenseAmount('');
+    saveToBackend(columns, checked, todos, monthlyBudget, updatedExpenses);
+  };
+
+  const handleDeleteExpense = (id) => {
+    const updatedExpenses = expenses.filter(exp => exp.id !== id);
+    setExpenses(updatedExpenses);
+    saveToBackend(columns, checked, todos, monthlyBudget, updatedExpenses);
+  };
+
+  // Expense calculations
+  const totalSpent = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  const remainingBalance = monthlyBudget - totalSpent;
+  const spentPercentage = monthlyBudget > 0 ? Math.min(100, Math.round((totalSpent / monthlyBudget) * 100)) : 0;
 
   // ── Habit Progress ───────────────────────────────────
   const days = getWeekDates(weekOffset);
@@ -230,7 +305,7 @@ export default function TrackerPage() {
 
     const newChecked = { ...checked, [key]: !checked[key] };
     setChecked(newChecked);
-    saveToBackend(columns, newChecked, todos);
+    saveToBackend(columns, newChecked, todos, monthlyBudget, expenses);
   };
 
   const openModal  = () => { setNewName(''); setShowInput(true); };
@@ -263,7 +338,7 @@ export default function TrackerPage() {
     
     const newColumns = [...columns, newCol];
     setColumns(newColumns);
-    saveToBackend(newColumns, checked, todos);
+    saveToBackend(newColumns, checked, todos, monthlyBudget, expenses);
     closeModal();
   };
 
@@ -273,7 +348,7 @@ export default function TrackerPage() {
     Object.keys(newChecked).forEach(k => { if (k.endsWith(`-${colId}`)) delete newChecked[k]; });
     setColumns(newColumns);
     setChecked(newChecked);
-    saveToBackend(newColumns, newChecked, todos);
+    saveToBackend(newColumns, newChecked, todos, monthlyBudget, expenses);
   };
 
   const startRename  = (id, name) => { setEditingColId(id); setEditName(name); };
@@ -282,7 +357,7 @@ export default function TrackerPage() {
     if (!editName.trim()) { cancelRename(); return; }
     const newColumns = columns.map(c => c.id === editingColId ? { ...c, name: editName.trim().toUpperCase() } : c);
     setColumns(newColumns);
-    saveToBackend(newColumns, checked, todos);
+    saveToBackend(newColumns, checked, todos, monthlyBudget, expenses);
     cancelRename();
   };
 
@@ -290,8 +365,8 @@ export default function TrackerPage() {
   const handleRenameKey = e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') cancelRename(); };
   const handleLogout    = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); };
 
-  const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'STATS', 'GOALS', 'NOTES'];
-  const TAB_COLORS    = ['#6366f1', '#ec4899', '#22c55e', '#f59e0b', '#8b5cf6'];
+  const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'MONTHLY EXP', 'STATS', 'GOALS', 'NOTES'];
+  const TAB_COLORS    = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
 
   const filteredTodos = todos.filter(t => {
     if (todoFilter === 'active') return !t.completed;
@@ -354,6 +429,48 @@ export default function TrackerPage() {
         </div>
       )}
 
+      {/* ── Budget Modal ───────────────────────────────── */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowBudgetModal(false)}>
+          <div
+            className="bg-[#fffcf5] rounded-2xl p-6 w-84 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => setShowBudgetModal(false)} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
+              <FiX size={18} />
+            </button>
+            <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
+            <p className="text-xs text-[#7c8499] mb-4">Enter your total budget for this month (e.g. 25000)</p>
+            
+            <form onSubmit={handleSaveBudget}>
+              <div className="relative mb-4">
+                <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
+                <input
+                  autoFocus
+                  type="number"
+                  placeholder="25000"
+                  value={budgetInput}
+                  onChange={e => setBudgetInput(e.target.value)}
+                  className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#10b981] font-semibold text-[#172554]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all"
+                >
+                  Save Budget
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ── Outer Layout ──────────────────────────────── */}
       <div className="w-[98vw] h-[95vh] flex">
 
@@ -404,6 +521,16 @@ export default function TrackerPage() {
                   <FiCheckSquare size={13} />
                   <span>{completedTodosCount} of {todos.length} Done</span>
                 </div>
+              )}
+
+              {activeTab === 'MONTHLY EXP' && (
+                <button
+                  onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                  className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1 text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm"
+                >
+                  <FiEdit3 size={13} />
+                  <span>Edit Budget</span>
+                </button>
               )}
 
               <button
@@ -552,8 +679,6 @@ export default function TrackerPage() {
             {/* TAB 2: TO-DO LIST VIEW */}
             {activeTab === 'TO-DO LIST' && (
               <div className="p-6 max-w-3xl mx-auto flex flex-col h-full">
-
-                {/* Notebook Page Header */}
                 <div className="flex items-center justify-between pb-4 border-b border-[#cbd5e1] mb-5">
                   <div>
                     <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
@@ -562,7 +687,6 @@ export default function TrackerPage() {
                     <p className="text-xs text-[#64748b]">Manage daily tasks, priorities & action items</p>
                   </div>
 
-                  {/* Filter Pills */}
                   <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl border border-[#cbd5e1]">
                     {['all', 'active', 'completed'].map(f => (
                       <button
@@ -576,7 +700,6 @@ export default function TrackerPage() {
                   </div>
                 </div>
 
-                {/* Add Task Input Form */}
                 <form onSubmit={handleAddTodo} className="bg-white p-3 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col md:flex-row items-center gap-3 mb-6">
                   <input
                     type="text"
@@ -586,7 +709,6 @@ export default function TrackerPage() {
                     className="flex-1 px-4 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#ec4899] font-medium text-[#172554] bg-[#fafafa]"
                   />
 
-                  {/* Category dropdown selector */}
                   <div className="flex items-center gap-1 shrink-0">
                     {Object.keys(CATEGORY_STYLES).map(cat => {
                       const style = CATEGORY_STYLES[cat];
@@ -617,7 +739,6 @@ export default function TrackerPage() {
                   </button>
                 </form>
 
-                {/* Tasks List */}
                 <div className="flex-1 overflow-auto pr-1 space-y-2.5">
                   {filteredTodos.length === 0 ? (
                     <div className="h-48 flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
@@ -668,7 +789,6 @@ export default function TrackerPage() {
                   )}
                 </div>
 
-                {/* Bottom Footer Actions */}
                 {todos.some(t => t.completed) && (
                   <div className="pt-3 border-t border-[#cbd5e1] mt-3 flex justify-between items-center text-xs">
                     <span className="text-[#64748b] font-medium">{completedTodosCount} completed</span>
@@ -683,7 +803,202 @@ export default function TrackerPage() {
               </div>
             )}
 
-            {/* TAB 3: STATS VIEW */}
+            {/* TAB 3: MONTHLY EXPENSE VIEW */}
+            {activeTab === 'MONTHLY EXP' && (
+              <div className="p-6 max-w-3xl mx-auto flex flex-col h-full gap-5">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e1]">
+                  <div>
+                    <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
+                      <span>💰</span> Monthly Expense Tracker
+                    </h2>
+                    <p className="text-xs text-[#64748b]">Track budget, daily spends and remaining balance</p>
+                  </div>
+
+                  <button
+                    onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm"
+                  >
+                    <FiEdit3 size={13} /> Set Budget
+                  </button>
+                </div>
+
+                {/* 3 Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Monthly Budget Card */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-[#64748b] font-semibold">
+                      <span>Monthly Budget</span>
+                      <FiDollarSign className="text-[#10b981]" />
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-2xl font-extrabold text-[#172554]">₹{monthlyBudget.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  {/* Total Spent Card */}
+                  <div className="bg-white p-4 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-[#64748b] font-semibold">
+                      <span>Total Spent</span>
+                      <FiTrendingDown className="text-[#ef4444]" />
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-2xl font-extrabold text-[#ef4444]">₹{totalSpent.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  {/* Remaining Balance Card */}
+                  <div className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-all ${
+                    remainingBalance < 0
+                      ? 'bg-red-50 border-red-200 text-red-700'
+                      : remainingBalance <= monthlyBudget * 0.2
+                        ? 'bg-amber-50 border-amber-200 text-amber-800'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  }`}>
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span>Remaining Balance</span>
+                      <FiCreditCard />
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-2xl font-extrabold">₹{remainingBalance.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="bg-white p-3.5 rounded-2xl border border-[#cbd5e1] shadow-sm space-y-1.5">
+                  <div className="flex justify-between text-xs font-bold text-[#172554]">
+                    <span>Budget Used ({spentPercentage}%)</span>
+                    <span>₹{totalSpent.toLocaleString('en-IN')} / ₹{monthlyBudget.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="w-full h-3 bg-[#f1f5f9] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        spentPercentage > 90 ? 'bg-red-500' : spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${spentPercentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Add Expense Form */}
+                <form onSubmit={handleAddExpense} className="bg-white p-3.5 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col md:flex-row items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="Expense title (e.g. Shopping, Milk)..."
+                    value={expenseTitle}
+                    onChange={e => setExpenseTitle(e.target.value)}
+                    className="flex-1 px-3.5 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
+                  />
+
+                  <div className="relative shrink-0 w-32">
+                    <span className="absolute left-3 top-2.5 text-xs font-bold text-[#64748b]">₹</span>
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      value={expenseAmount}
+                      onChange={e => setExpenseAmount(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
+                    />
+                  </div>
+
+                  <input
+                    type="date"
+                    value={expenseDate}
+                    onChange={e => setExpenseDate(e.target.value)}
+                    className="px-3 py-2 border border-[#e2e8f0] rounded-xl text-xs font-medium text-[#172554] outline-none focus:border-[#10b981] bg-[#fafafa] shrink-0"
+                  />
+
+                  {/* Category Pills */}
+                  <div className="flex items-center gap-1 overflow-x-auto shrink-0 py-1">
+                    {Object.keys(EXPENSE_CATEGORIES).map(cat => {
+                      const style = EXPENSE_CATEGORIES[cat];
+                      const isSelected = expenseCat === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setExpenseCat(cat)}
+                          className={`px-2 py-1 rounded-lg text-xs font-bold transition-all border ${isSelected ? 'shadow-sm scale-105' : 'opacity-60 hover:opacity-100'}`}
+                          style={{ background: style.bg, color: style.text, borderColor: style.border }}
+                        >
+                          {style.emoji}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all flex items-center gap-1 shrink-0"
+                  >
+                    <FiPlus size={14} strokeWidth={3} /> Add
+                  </button>
+                </form>
+
+                {/* Expenses History List */}
+                <div className="flex-1 overflow-auto space-y-2 pr-1">
+                  <h3 className="text-xs font-bold text-[#64748b] tracking-wider uppercase mb-1">Expense History</h3>
+
+                  {expenses.length === 0 ? (
+                    <div className="h-40 flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
+                      <span className="text-3xl mb-2">💸</span>
+                      <p className="text-sm font-bold text-[#172554]">No expenses logged yet</p>
+                      <p className="text-xs text-[#64748b]">Add your daily expenses above to calculate remaining balance!</p>
+                    </div>
+                  ) : (
+                    expenses.map(exp => {
+                      const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
+                      const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      });
+
+                      return (
+                        <div
+                          key={exp.id}
+                          className="bg-white p-3.5 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0"
+                              style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                            >
+                              {catStyle.emoji} {exp.category}
+                            </span>
+
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-sm font-bold text-[#172554] truncate">{exp.title}</span>
+                              <span className="text-[10px] font-semibold text-[#64748b] flex items-center gap-1">
+                                <FiCalendar size={10} /> {formattedDate}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-base font-extrabold text-[#ef4444]">
+                              -₹{Number(exp.amount).toLocaleString('en-IN')}
+                            </span>
+                            <button
+                              onClick={() => handleDeleteExpense(exp.id)}
+                              className="p-1.5 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
+                              title="Delete expense"
+                            >
+                              <FiTrash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 4: STATS VIEW */}
             {activeTab === 'STATS' && (
               <div className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
                 <div className="border-b border-[#cbd5e1] pb-3">
@@ -731,7 +1046,7 @@ export default function TrackerPage() {
               </div>
             )}
 
-            {/* TAB 4: GOALS VIEW */}
+            {/* TAB 5: GOALS VIEW */}
             {activeTab === 'GOALS' && (
               <div className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
                 <div className="border-b border-[#cbd5e1] pb-3">
@@ -757,7 +1072,7 @@ export default function TrackerPage() {
               </div>
             )}
 
-            {/* TAB 5: NOTES VIEW */}
+            {/* TAB 6: NOTES VIEW */}
             {activeTab === 'NOTES' && (
               <div className="p-6 max-w-2xl mx-auto flex flex-col h-full gap-4">
                 <div className="border-b border-[#cbd5e1] pb-2 flex justify-between items-center">
@@ -830,7 +1145,7 @@ export default function TrackerPage() {
                     writingMode: 'vertical-rl',
                     textOrientation: 'mixed',
                     transform: isActive ? 'rotate(180deg) translateX(-3px)' : 'rotate(180deg)',
-                    minHeight: 65,
+                    minHeight: 60,
                   }}
                 >
                   {tab}
