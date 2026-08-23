@@ -965,50 +965,78 @@ export default function TrackerPage() {
                         <p className="text-xs text-[#64748b]">Add your daily expenses on the left to calculate remaining balance!</p>
                       </div>
                     ) : (
-                      expenses.map(exp => {
-                        const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
-                        const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
+                      (() => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        const sorted = [...expenses].sort((a, b) => {
+                          const dateA = new Date(a.date || a.createdAt);
+                          const dateB = new Date(b.date || b.createdAt);
+                          return dateB - dateA; // latest first
                         });
 
-                        return (
-                          <div
-                            key={exp.id}
-                            className="bg-white p-3 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <span
-                                className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0"
-                                style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
-                              >
-                                {catStyle.emoji} {exp.category}
-                              </span>
+                        return sorted.map(exp => {
+                          const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
+                          const expDate = new Date(exp.date || exp.createdAt);
+                          expDate.setHours(0, 0, 0, 0);
+                          const isBackDate = expDate < today;
+                          const isFuture = expDate > today;
 
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-xs font-bold text-[#172554] truncate">{exp.title}</span>
-                                <span className="text-[10px] font-semibold text-[#64748b] flex items-center gap-1">
-                                  <FiCalendar size={9} /> {formattedDate}
+                          const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          });
+
+                          return (
+                            <div
+                              key={exp.id}
+                              className="bg-white p-3 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span
+                                  className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0"
+                                  style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                                >
+                                  {catStyle.emoji} {exp.category}
                                 </span>
+
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs font-bold text-[#172554] truncate">{exp.title}</span>
+                                    {isBackDate && (
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#fef3c7] text-[#b45309] border border-[#fde68a] shrink-0">
+                                        📅 Back Date
+                                      </span>
+                                    )}
+                                    {isFuture && (
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#ede9fe] text-[#7c3aed] border border-[#ddd6fe] shrink-0">
+                                        🔮 Upcoming
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] font-semibold text-[#64748b] flex items-center gap-1">
+                                    <FiCalendar size={9} /> {formattedDate}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2.5 shrink-0">
+                                <span className="text-sm font-extrabold text-[#ef4444]">
+                                  -₹{Number(exp.amount).toLocaleString('en-IN')}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteExpense(exp.id)}
+                                  className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
+                                  title="Delete expense"
+                                >
+                                  <FiTrash2 size={12} />
+                                </button>
                               </div>
                             </div>
-
-                            <div className="flex items-center gap-2.5 shrink-0">
-                              <span className="text-sm font-extrabold text-[#ef4444]">
-                                -₹{Number(exp.amount).toLocaleString('en-IN')}
-                              </span>
-                              <button
-                                onClick={() => handleDeleteExpense(exp.id)}
-                                className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
-                                title="Delete expense"
-                              >
-                                <FiTrash2 size={12} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
+                          );
+                        });
+                      })()
                     )}
                   </div>
                 </div>
