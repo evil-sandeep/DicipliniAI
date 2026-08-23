@@ -7,6 +7,14 @@ const columnSchema = new mongoose.Schema({
   color: { type: String }
 }, { _id: false });
 
+const todoSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  text: { type: String, required: true },
+  completed: { type: Boolean, default: false },
+  category: { type: String, default: 'Personal' },
+  createdAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const trackerSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,7 +27,9 @@ const trackerSchema = new mongoose.Schema({
     type: Map,
     of: Boolean,
     default: {}
-  }
+  },
+  todos: [todoSchema]
 }, { timestamps: true });
 
 export default mongoose.model('Tracker', trackerSchema);
+

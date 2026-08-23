@@ -14,12 +14,13 @@ router.get('/', async (req, res) => {
     
     // If no tracker data exists yet, return empty defaults
     if (!trackerData) {
-      return res.json({ columns: [], checked: {} });
+      return res.json({ columns: [], checked: {}, todos: [] });
     }
 
     res.json({
       columns: trackerData.columns,
-      checked: Object.fromEntries(trackerData.checked) // Convert Map to Object
+      checked: Object.fromEntries(trackerData.checked || new Map()), // Convert Map to Object
+      todos: trackerData.todos || []
     });
   } catch (error) {
     console.error(error);
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
 // PUT (update) user's tracker data
 router.put('/', async (req, res) => {
   try {
-    const { columns, checked } = req.body;
+    const { columns, checked, todos } = req.body;
     
     // Convert checked object to Map format for Mongoose
     const checkedMap = new Map(Object.entries(checked || {}));
@@ -38,14 +39,16 @@ router.put('/', async (req, res) => {
     let trackerData = await Tracker.findOne({ user: req.user.userId });
 
     if (trackerData) {
-      trackerData.columns = columns;
-      trackerData.checked = checkedMap;
+      if (columns !== undefined) trackerData.columns = columns;
+      if (checked !== undefined) trackerData.checked = checkedMap;
+      if (todos !== undefined) trackerData.todos = todos;
       await trackerData.save();
     } else {
       trackerData = new Tracker({
         user: req.user.userId,
-        columns,
-        checked: checkedMap
+        columns: columns || [],
+        checked: checkedMap,
+        todos: todos || []
       });
       await trackerData.save();
     }
