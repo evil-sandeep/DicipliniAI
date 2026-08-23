@@ -8,7 +8,7 @@ import autoTable from 'jspdf-autotable';
  * @param {Array} params.expenses
  * @param {Object} params.user
  */
-export async function downloadExpensePDF({ monthlyBudget = 0, expenses = [], user = null }) {
+export async function downloadExpensePDF({ monthlyBudget = 0, expenses = [], user = null, monthLabel = null }) {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -23,7 +23,7 @@ export async function downloadExpensePDF({ monthlyBudget = 0, expenses = [], use
   const remainingBalance = monthlyBudget - totalSpent;
   const spentPct = monthlyBudget > 0 ? Math.min(100, Math.round((totalSpent / monthlyBudget) * 100)) : 0;
 
-  const currentMonthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const currentMonthYear = monthLabel || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const generatedOn = new Date().toLocaleString('en-IN', {
     day: 'numeric',
     month: 'short',
