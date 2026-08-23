@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3 } from 'react-icons/fi';
+import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3, FiCpu, FiSend, FiMessageSquare, FiZap, FiRefreshCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 
@@ -126,6 +126,15 @@ export default function TrackerPage() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCat, setExpenseCat] = useState('Shopping');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // ── AI Analysis & Coach State ────────────────────────
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiMessages, setAiMessages] = useState([
+    { sender: 'ai', text: "👋 Hello! I'm your **DiscipliniAI Coach & Data Analyst**.\n\nI have real-time access to your habit streaks, to-dos, and monthly expenses. Ask me any question or pick a prompt below to analyze your discipline!" }
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const aiChatEndRef = useRef(null);
 
   const saveTimerRef = useRef(null);
   const getToken = () => localStorage.getItem('token');
@@ -363,6 +372,61 @@ export default function TrackerPage() {
   const handleRenameKey = e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') cancelRename(); };
   const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/login'); };
 
+  // ── AI Chat Handler ──────────────────────────────────
+  const handleSendAiMessage = async (customText) => {
+    const query = (typeof customText === 'string' ? customText : aiInput).trim();
+    if (!query || aiLoading) return;
+
+    const userMsg = { sender: 'user', text: query };
+    const updatedHistory = [...aiMessages, userMsg];
+    setAiMessages(updatedHistory);
+    setAiInput('');
+    setAiLoading(true);
+
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          message: query,
+          history: aiMessages.slice(-6)
+        })
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        throw new Error(res.status === 404 ? 'AI service endpoint (/api/ai/chat) is not deployed on the backend server yet.' : `Server returned status ${res.status}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to get AI response');
+      }
+
+      setAiMessages(prev => [...prev, { sender: 'ai', text: data.reply }]);
+    } catch (err) {
+      console.error('AI chat error:', err);
+      setAiMessages(prev => [
+        ...prev,
+        { sender: 'ai', text: `⚠️ ${err.message || 'Unable to connect to AI server. Please make sure OPENROUTER_API_KEY is configured in backend .env'}` }
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAiModal && aiChatEndRef.current) {
+      aiChatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [aiMessages, showAiModal, aiLoading]);
+
   const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'MONTHLY EXP', 'STATS', 'GOALS', 'NOTES'];
   const TAB_COLORS = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
 
@@ -469,6 +533,158 @@ export default function TrackerPage() {
         </div>
       )}
 
+      {/* ── AI Analysis & Chat Modal ────────────────────── */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowAiModal(false)}>
+          <div
+            className="bg-[#fffcf5] rounded-3xl w-full max-w-xl h-[85vh] max-h-[680px] shadow-2xl border border-[#ede8db] flex flex-col overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center shadow-inner text-white font-bold text-base">
+                  ✨
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold tracking-wide flex items-center gap-1.5">
+                    DiscipliniAI Analyst & Coach
+                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-indigo-500/30 text-indigo-300 rounded-full border border-indigo-400/20">
+                      Live Data
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-300">Habits, tasks, and monthly budget insights</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAiMessages([
+                    { sender: 'ai', text: "👋 Chat reset! Ask me anything about your current habits, to-do lists, or spending." }
+                  ])}
+                  title="Clear Chat"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs"
+                >
+                  <FiRefreshCw size={14} />
+                </button>
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Suggested Quick Prompts */}
+            <div className="px-4 py-2.5 bg-[#f8f5ee] border-b border-[#e2dcd2] flex items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
+              <span className="text-[10px] font-bold text-[#64748b] shrink-0 uppercase tracking-wider">Quick Prompts:</span>
+              {[
+                { label: '👨‍💻 About Founder', prompt: 'Tell me about Mr. Sandeep, the creator of DiscipliniOS, the vision behind this app, and where I can find his portfolio.' },
+                { label: '📊 Habit Consistency', prompt: 'Analyze my current habit consistency and tell me where I should improve.' },
+                { label: '💰 Budget & Expense Analysis', prompt: 'Analyze my monthly expenses and budget. How much have I spent and what are my top categories?' },
+                { label: '📋 Pending Tasks Review', prompt: 'Review my to-do tasks and recommend which urgent tasks I should tackle next.' },
+                { label: '💡 Discipline Tips', prompt: 'Give me 3 personalized tips to stay disciplined this week based on my tracker progress.' }
+              ].map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendAiMessage(p.prompt)}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-full shadow-xs shrink-0 transition-all hover:scale-102 cursor-pointer disabled:opacity-50"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Messages List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fffcf5]">
+              {aiMessages.map((msg, i) => {
+                // Format links to make them clickable
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const formattedContent = typeof msg.text === 'string' ? msg.text.split(urlRegex).map((part, pIdx) => {
+                  if (part.match(urlRegex)) {
+                    return (
+                      <a
+                        key={pIdx}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-bold text-[#4f46e5] hover:text-[#3730a3] bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1 transition-all mx-0.5"
+                      >
+                        {part} ↗
+                      </a>
+                    );
+                  }
+                  return part;
+                }) : msg.text;
+
+                return (
+                  <div
+                    key={i}
+                    className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {msg.sender === 'ai' && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold mt-0.5">
+                        ✨
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
+                        msg.sender === 'user'
+                          ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
+                          : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
+                      }`}
+                    >
+                      {formattedContent}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {aiLoading && (
+                <div className="flex gap-2.5 justify-start items-center">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold animate-pulse">
+                    ✨
+                  </div>
+                  <div className="bg-white border border-[#e2dcd2] text-[#6366f1] rounded-2xl rounded-bl-xs px-4 py-2.5 text-xs flex items-center gap-2 shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-ping" />
+                    <span className="font-semibold">Analyzing your discipline data…</span>
+                  </div>
+                </div>
+              )}
+
+              <div ref={aiChatEndRef} />
+            </div>
+
+            {/* Chat Input Box */}
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSendAiMessage(); }}
+              className="p-3 bg-[#fdfbf7] border-t border-[#e2dcd2] flex items-center gap-2 shrink-0"
+            >
+              <input
+                type="text"
+                placeholder="Ask AI about habits, tasks, expenses, or advice..."
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                disabled={aiLoading}
+                className="flex-1 px-4 py-2.5 bg-white border border-[#cbd5e1] rounded-2xl text-xs font-medium text-[#172554] outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/10 shadow-inner"
+              />
+
+              <button
+                type="submit"
+                disabled={!aiInput.trim() || aiLoading}
+                className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <FiSend size={13} />
+                <span>Send</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* ── Outer Layout ──────────────────────────────── */}
       <div className="w-[98vw] h-[95vh] flex">
 
@@ -530,6 +746,16 @@ export default function TrackerPage() {
                   <span>Edit Budget</span>
                 </button>
               )}
+
+              {/* ✨ AI Analysis Button */}
+              <button
+                onClick={() => setShowAiModal(true)}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:via-indigo-700 hover:to-purple-700 text-white rounded-full px-3.5 py-1 text-xs font-bold shadow-md hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Open AI Data Analysis & Coach"
+              >
+                <span className="text-amber-300 text-xs">✨</span>
+                <span>AI Analysis</span>
+              </button>
 
               <button
                 onClick={handleLogout}
