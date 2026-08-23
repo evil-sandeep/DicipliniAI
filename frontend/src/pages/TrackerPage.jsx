@@ -805,192 +805,212 @@ export default function TrackerPage() {
 
             {/* TAB 3: MONTHLY EXPENSE VIEW */}
             {activeTab === 'MONTHLY EXP' && (
-              <div className="p-6 max-w-3xl mx-auto flex flex-col h-full gap-5">
+              <div className="p-6 w-full h-full flex flex-col md:flex-row gap-6 overflow-hidden">
 
-                {/* Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#cbd5e1]">
-                  <div>
-                    <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
-                      <span>💰</span> Monthly Expense Tracker
-                    </h2>
-                    <p className="text-xs text-[#64748b]">Track budget, daily spends and remaining balance</p>
-                  </div>
-
-                  <button
-                    onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm"
-                  >
-                    <FiEdit3 size={13} /> Set Budget
-                  </button>
-                </div>
-
-                {/* 3 Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Monthly Budget Card */}
-                  <div className="bg-white p-4 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-[#64748b] font-semibold">
-                      <span>Monthly Budget</span>
-                      <FiDollarSign className="text-[#10b981]" />
+                {/* LEFT SIDE: Fixed Control & Budget Panel */}
+                <div className="w-full md:w-1/2 flex flex-col gap-4 overflow-y-auto pr-1">
+                  {/* Header */}
+                  <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e1]">
+                    <div>
+                      <h2 className="text-lg font-bold text-[#172554] flex items-center gap-2">
+                        <span>💰</span> Monthly Expense Tracker
+                      </h2>
+                      <p className="text-[11px] text-[#64748b]">Track budget, daily spends & remaining balance</p>
                     </div>
-                    <div className="mt-2">
-                      <span className="text-2xl font-extrabold text-[#172554]">₹{monthlyBudget.toLocaleString('en-IN')}</span>
+
+                    <button
+                      onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0"
+                    >
+                      <FiEdit3 size={12} /> Set Budget
+                    </button>
+                  </div>
+
+                  {/* 3 Summary Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Monthly Budget Card */}
+                    <div className="bg-white p-3 rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-[11px] text-[#64748b] font-semibold">
+                        <span>Monthly Budget</span>
+                        <FiDollarSign className="text-[#10b981]" />
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="text-xl font-extrabold text-[#172554]">₹{monthlyBudget.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+
+                    {/* Total Spent Card */}
+                    <div className="bg-white p-3 rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-[11px] text-[#64748b] font-semibold">
+                        <span>Total Spent</span>
+                        <FiTrendingDown className="text-[#ef4444]" />
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="text-xl font-extrabold text-[#ef4444]">₹{totalSpent.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+
+                    {/* Remaining Balance Card */}
+                    <div className={`p-3 rounded-xl border shadow-sm flex flex-col justify-between transition-all ${remainingBalance < 0
+                        ? 'bg-red-50 border-red-200 text-red-700'
+                        : remainingBalance <= monthlyBudget * 0.2
+                          ? 'bg-amber-50 border-amber-200 text-amber-800'
+                          : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      }`}>
+                      <div className="flex items-center justify-between text-[11px] font-semibold">
+                        <span>Remaining Balance</span>
+                        <FiCreditCard />
+                      </div>
+                      <div className="mt-1.5">
+                        <span className="text-xl font-extrabold">₹{remainingBalance.toLocaleString('en-IN')}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Total Spent Card */}
-                  <div className="bg-white p-4 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-[#64748b] font-semibold">
-                      <span>Total Spent</span>
-                      <FiTrendingDown className="text-[#ef4444]" />
+                  {/* Progress Bar */}
+                  <div className="bg-white p-3 rounded-xl border border-[#cbd5e1] shadow-sm space-y-1">
+                    <div className="flex justify-between text-xs font-bold text-[#172554]">
+                      <span>Budget Used ({spentPercentage}%)</span>
+                      <span>₹{totalSpent.toLocaleString('en-IN')} / ₹{monthlyBudget.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="mt-2">
-                      <span className="text-2xl font-extrabold text-[#ef4444]">₹{totalSpent.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-
-                  {/* Remaining Balance Card */}
-                  <div className={`p-4 rounded-2xl border shadow-sm flex flex-col justify-between transition-all ${remainingBalance < 0
-                      ? 'bg-red-50 border-red-200 text-red-700'
-                      : remainingBalance <= monthlyBudget * 0.2
-                        ? 'bg-amber-50 border-amber-200 text-amber-800'
-                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                    }`}>
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span>Remaining Balance</span>
-                      <FiCreditCard />
-                    </div>
-                    <div className="mt-2">
-                      <span className="text-2xl font-extrabold">₹{remainingBalance.toLocaleString('en-IN')}</span>
+                    <div className="w-full h-2.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${spentPercentage > 90 ? 'bg-red-500' : spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`}
+                        style={{ width: `${spentPercentage}%` }}
+                      />
                     </div>
                   </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="bg-white p-3.5 rounded-2xl border border-[#cbd5e1] shadow-sm space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold text-[#172554]">
-                    <span>Budget Used ({spentPercentage}%)</span>
-                    <span>₹{totalSpent.toLocaleString('en-IN')} / ₹{monthlyBudget.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="w-full h-3 bg-[#f1f5f9] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${spentPercentage > 90 ? 'bg-red-500' : spentPercentage > 75 ? 'bg-amber-500' : 'bg-emerald-500'
-                        }`}
-                      style={{ width: `${spentPercentage}%` }}
-                    />
-                  </div>
-                </div>
+                  {/* Add Expense Form */}
+                  <form onSubmit={handleAddExpense} className="bg-white p-3.5 rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col gap-3">
+                    <h4 className="text-xs font-bold text-[#172554] tracking-wide uppercase">Add New Expense</h4>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        placeholder="Expense title (e.g. Shopping, Milk)..."
+                        value={expenseTitle}
+                        onChange={e => setExpenseTitle(e.target.value)}
+                        className="flex-1 px-3 py-1.5 border border-[#e2e8f0] rounded-xl text-xs outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
+                      />
 
-                {/* Add Expense Form */}
-                <form onSubmit={handleAddExpense} className="bg-white p-3.5 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col md:flex-row items-center gap-3">
-                  <input
-                    type="text"
-                    placeholder="Expense title (e.g. Shopping, Milk)..."
-                    value={expenseTitle}
-                    onChange={e => setExpenseTitle(e.target.value)}
-                    className="flex-1 px-3.5 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
-                  />
-
-                  <div className="relative shrink-0 w-32">
-                    <span className="absolute left-3 top-2.5 text-xs font-bold text-[#64748b]">₹</span>
-                    <input
-                      type="number"
-                      placeholder="Amount"
-                      value={expenseAmount}
-                      onChange={e => setExpenseAmount(e.target.value)}
-                      className="w-full pl-7 pr-3 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
-                    />
-                  </div>
-
-                  <input
-                    type="date"
-                    value={expenseDate}
-                    onChange={e => setExpenseDate(e.target.value)}
-                    className="px-3 py-2 border border-[#e2e8f0] rounded-xl text-xs font-medium text-[#172554] outline-none focus:border-[#10b981] bg-[#fafafa] shrink-0"
-                  />
-
-                  {/* Category Pills */}
-                  <div className="flex items-center gap-1 overflow-x-auto shrink-0 py-1">
-                    {Object.keys(EXPENSE_CATEGORIES).map(cat => {
-                      const style = EXPENSE_CATEGORIES[cat];
-                      const isSelected = expenseCat === cat;
-                      return (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setExpenseCat(cat)}
-                          className={`px-2 py-1 rounded-lg text-xs font-bold transition-all border ${isSelected ? 'shadow-sm scale-105' : 'opacity-60 hover:opacity-100'}`}
-                          style={{ background: style.bg, color: style.text, borderColor: style.border }}
-                        >
-                          {style.emoji}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all flex items-center gap-1 shrink-0"
-                  >
-                    <FiPlus size={14} strokeWidth={3} /> Add
-                  </button>
-                </form>
-
-                {/* Expenses History List */}
-                <div className="flex-1 overflow-auto space-y-2 pr-1">
-                  <h3 className="text-xs font-bold text-[#64748b] tracking-wider uppercase mb-1">Expense History</h3>
-
-                  {expenses.length === 0 ? (
-                    <div className="h-40 flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
-                      <span className="text-3xl mb-2">💸</span>
-                      <p className="text-sm font-bold text-[#172554]">No expenses logged yet</p>
-                      <p className="text-xs text-[#64748b]">Add your daily expenses above to calculate remaining balance!</p>
+                      <div className="relative shrink-0 sm:w-32">
+                        <span className="absolute left-2.5 top-2 text-xs font-bold text-[#64748b]">₹</span>
+                        <input
+                          type="number"
+                          placeholder="Amount"
+                          value={expenseAmount}
+                          onChange={e => setExpenseAmount(e.target.value)}
+                          className="w-full pl-6 pr-2.5 py-1.5 border border-[#e2e8f0] rounded-xl text-xs outline-none focus:border-[#10b981] font-medium text-[#172554] bg-[#fafafa]"
+                        />
+                      </div>
                     </div>
-                  ) : (
-                    expenses.map(exp => {
-                      const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
-                      const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      });
 
-                      return (
-                        <div
-                          key={exp.id}
-                          className="bg-white p-3.5 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span
-                              className="px-2.5 py-1 rounded-lg text-xs font-bold border shrink-0"
-                              style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                    <div className="flex items-center justify-between gap-2">
+                      <input
+                        type="date"
+                        value={expenseDate}
+                        onChange={e => setExpenseDate(e.target.value)}
+                        className="px-2.5 py-1.5 border border-[#e2e8f0] rounded-xl text-xs font-medium text-[#172554] outline-none focus:border-[#10b981] bg-[#fafafa]"
+                      />
+
+                      {/* Category Pills */}
+                      <div className="flex items-center gap-1 overflow-x-auto">
+                        {Object.keys(EXPENSE_CATEGORIES).map(cat => {
+                          const style = EXPENSE_CATEGORIES[cat];
+                          const isSelected = expenseCat === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => setExpenseCat(cat)}
+                              className={`px-2 py-1 rounded-lg text-xs font-bold transition-all border ${isSelected ? 'shadow-sm scale-105' : 'opacity-60 hover:opacity-100'}`}
+                              style={{ background: style.bg, color: style.text, borderColor: style.border }}
+                              title={cat}
                             >
-                              {catStyle.emoji} {exp.category}
-                            </span>
+                              {style.emoji}
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                            <div className="flex flex-col min-w-0">
-                              <span className="text-sm font-bold text-[#172554] truncate">{exp.title}</span>
-                              <span className="text-[10px] font-semibold text-[#64748b] flex items-center gap-1">
-                                <FiCalendar size={10} /> {formattedDate}
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all flex items-center gap-1 shrink-0"
+                      >
+                        <FiPlus size={14} strokeWidth={3} /> Add
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* RIGHT SIDE: Scrollable Expense History */}
+                <div className="w-full md:w-1/2 flex flex-col h-full bg-[#fdfbf7] p-4 rounded-2xl border border-[#cbd5e1] overflow-hidden">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e1] mb-3 shrink-0">
+                    <h3 className="text-xs font-bold text-[#64748b] tracking-wider uppercase flex items-center gap-1.5">
+                      <span>📋</span> EXPENSE HISTORY
+                    </h3>
+                    <span className="text-[11px] font-semibold text-[#10b981] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                      {expenses.length} Entries
+                    </span>
+                  </div>
+
+                  {/* Scrollable list container */}
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-1.5">
+                    {expenses.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
+                        <span className="text-3xl mb-2">💸</span>
+                        <p className="text-sm font-bold text-[#172554]">No expenses logged yet</p>
+                        <p className="text-xs text-[#64748b]">Add your daily expenses on the left to calculate remaining balance!</p>
+                      </div>
+                    ) : (
+                      expenses.map(exp => {
+                        const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
+                        const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        });
+
+                        return (
+                          <div
+                            key={exp.id}
+                            className="bg-white p-3 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span
+                                className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0"
+                                style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                              >
+                                {catStyle.emoji} {exp.category}
                               </span>
+
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-bold text-[#172554] truncate">{exp.title}</span>
+                                <span className="text-[10px] font-semibold text-[#64748b] flex items-center gap-1">
+                                  <FiCalendar size={9} /> {formattedDate}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 shrink-0">
+                              <span className="text-sm font-extrabold text-[#ef4444]">
+                                -₹{Number(exp.amount).toLocaleString('en-IN')}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteExpense(exp.id)}
+                                className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
+                                title="Delete expense"
+                              >
+                                <FiTrash2 size={12} />
+                              </button>
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-base font-extrabold text-[#ef4444]">
-                              -₹{Number(exp.amount).toLocaleString('en-IN')}
-                            </span>
-                            <button
-                              onClick={() => handleDeleteExpense(exp.id)}
-                              className="p-1.5 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
-                              title="Delete expense"
-                            >
-                              <FiTrash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
 
               </div>
