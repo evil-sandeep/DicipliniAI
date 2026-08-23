@@ -1,9 +1,38 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FaYoutube, FaWalking } from 'react-icons/fa';
-import { FiCode, FiPlus, FiList, FiX, FiCheck, FiLogOut, FiEdit2, FiTrash2, FiCalendar, FiChevronLeft, FiChevronRight, FiStar, FiCheckSquare, FiSquare, FiPieChart, FiTarget, FiFileText, FiDollarSign, FiCreditCard, FiTrendingDown, FiEdit3, FiCpu, FiSend, FiMessageSquare, FiZap, FiRefreshCw } from 'react-icons/fi';
+import {
+  FiCode,
+  FiPlus,
+  FiList,
+  FiX,
+  FiCheck,
+  FiLogOut,
+  FiEdit2,
+  FiTrash2,
+  FiCalendar,
+  FiChevronLeft,
+  FiChevronRight,
+  FiStar,
+  FiCheckSquare,
+  FiSquare,
+  FiPieChart,
+  FiTarget,
+  FiFileText,
+  FiDollarSign,
+  FiCreditCard,
+  FiTrendingDown,
+  FiEdit3,
+  FiCpu,
+  FiSend,
+  FiMessageSquare,
+  FiZap,
+  FiRefreshCw,
+  FiDownload,
+} from 'react-icons/fi';
+
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
-
+import { downloadExpensePDF } from '../utils/generateExpensePdf';
 const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
@@ -120,6 +149,7 @@ export default function TrackerPage() {
   // ── Monthly Expense State ────────────────────────────
   const [monthlyBudget, setMonthlyBudget] = useState(25000);
   const [expenses, setExpenses] = useState([]);
+  const [selectedMonthOffset, setSelectedMonthOffset] = useState(0); // 0 = current month, -1 = prev, +1 = next
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
   const [expenseTitle, setExpenseTitle] = useState('');
@@ -281,8 +311,29 @@ export default function TrackerPage() {
     saveToBackend(columns, checked, todos, monthlyBudget, updatedExpenses);
   };
 
-  // Expense calculations
-  const totalSpent = expenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  // Month navigation helper
+  function getSelectedMonthInfo(offset = 0) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + offset);
+    const year = d.getFullYear();
+    const monthNum = String(d.getMonth() + 1).padStart(2, '0');
+    const monthKey = `${year}-${monthNum}`; // e.g. "2026-08"
+    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); // e.g. "August 2026"
+    const shortLabel = d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    return { year, monthNum, monthKey, label, shortLabel, dateObj: d };
+  }
+
+  const selectedMonthInfo = getSelectedMonthInfo(selectedMonthOffset);
+
+  // Filter expenses that belong specifically to the selected month (auto-resets every month)
+  const monthlyExpenses = expenses.filter(exp => {
+    const expDate = exp.date || exp.createdAt;
+    return expDate && String(expDate).startsWith(selectedMonthInfo.monthKey);
+  });
+
+  // Expense calculations for the selected month
+  const totalSpent = monthlyExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
   const remainingBalance = monthlyBudget - totalSpent;
   const spentPercentage = monthlyBudget > 0 ? Math.min(100, Math.round((totalSpent / monthlyBudget) * 100)) : 0;
 
@@ -631,11 +682,10 @@ export default function TrackerPage() {
                     )}
 
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${
-                        msg.sender === 'user'
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${msg.sender === 'user'
                           ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
                           : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
-                      }`}
+                        }`}
                     >
                       {formattedContent}
                     </div>
@@ -738,13 +788,24 @@ export default function TrackerPage() {
               )}
 
               {activeTab === 'MONTHLY EXP' && (
-                <button
-                  onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
-                  className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1 text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm"
-                >
-                  <FiEdit3 size={13} />
-                  <span>Edit Budget</span>
-                </button>
+                <div className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1 text-xs font-bold text-[#16a34a] shadow-sm">
+                  <FiCalendar size={12} />
+                  <span>{selectedMonthInfo.shortLabel}</span>
+                  <button
+                    onClick={() => setSelectedMonthOffset(o => o - 1)}
+                    title="Previous Month"
+                    className="hover:bg-[#dcfce7] rounded-full p-0.5 ml-1 transition-colors cursor-pointer"
+                  >
+                    <FiChevronLeft size={11} />
+                  </button>
+                  <button
+                    onClick={() => setSelectedMonthOffset(o => o + 1)}
+                    title="Next Month"
+                    className="hover:bg-[#dcfce7] rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <FiChevronRight size={11} />
+                  </button>
+                </div>
               )}
 
               {/* ✨ AI Analysis Button */}
@@ -1034,20 +1095,61 @@ export default function TrackerPage() {
                 {/* LEFT SIDE: Fixed Control & Budget Panel */}
                 <div className="w-full md:w-1/2 flex flex-col gap-4 overflow-y-auto pr-1">
                   {/* Header */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e1]">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#cbd5e1] gap-2 flex-wrap">
                     <div>
                       <h2 className="text-lg font-bold text-[#172554] flex items-center gap-2">
                         <span>💰</span> Monthly Expense Tracker
                       </h2>
-                      <p className="text-[11px] text-[#64748b]">Track budget, daily spends & remaining balance</p>
+                      <p className="text-[11px] text-[#64748b]">Track budget, daily spends & monthly balances</p>
                     </div>
 
-                    <button
-                      onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0"
-                    >
-                      <FiEdit3 size={12} /> Set Budget
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Month / Calendar Selector */}
+                      <div className="flex items-center gap-1 bg-white border border-[#cbd5e1] rounded-xl px-2.5 py-1.5 shadow-sm text-xs text-[#172554] font-bold">
+                        <FiCalendar size={13} className="text-[#10b981]" />
+                        <span className="min-w-[95px] text-center">{selectedMonthInfo.label}</span>
+                        <div className="flex items-center gap-0.5 ml-1">
+                          <button
+                            onClick={() => setSelectedMonthOffset(o => o - 1)}
+                            title="Previous Month (e.g. July, May)"
+                            className="w-5 h-5 rounded hover:bg-[#f1f5f9] flex items-center justify-center transition-colors text-[#64748b] hover:text-[#172554] cursor-pointer"
+                          >
+                            <FiChevronLeft size={12} />
+                          </button>
+                          {selectedMonthOffset !== 0 && (
+                            <button
+                              onClick={() => setSelectedMonthOffset(0)}
+                              title="Go to current month"
+                              className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold cursor-pointer"
+                            >
+                              Today
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setSelectedMonthOffset(o => o + 1)}
+                            title="Next Month"
+                            className="w-5 h-5 rounded hover:bg-[#f1f5f9] flex items-center justify-center transition-colors text-[#64748b] hover:text-[#172554] cursor-pointer"
+                          >
+                            <FiChevronRight size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => downloadExpensePDF({ monthlyBudget, expenses: monthlyExpenses, user, monthLabel: selectedMonthInfo.label })}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#eef2ff] border border-[#c7d2fe] rounded-xl text-xs font-bold text-[#4f46e5] hover:bg-[#e0e7ff] transition-all shadow-sm shrink-0 cursor-pointer"
+                        title="Download PDF Expense Statement"
+                      >
+                        <FiDownload size={12} /> Download PDF
+                      </button>
+
+                      <button
+                        onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <FiEdit3 size={12} /> Set Budget
+                      </button>
+                    </div>
                   </div>
 
                   {/* 3 Summary Cards */}
@@ -1076,10 +1178,10 @@ export default function TrackerPage() {
 
                     {/* Remaining Balance Card */}
                     <div className={`p-3 rounded-xl border shadow-sm flex flex-col justify-between transition-all ${remainingBalance < 0
-                        ? 'bg-red-50 border-red-200 text-red-700'
-                        : remainingBalance <= monthlyBudget * 0.2
-                          ? 'bg-amber-50 border-amber-200 text-amber-800'
-                          : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      ? 'bg-red-50 border-red-200 text-red-700'
+                      : remainingBalance <= monthlyBudget * 0.2
+                        ? 'bg-amber-50 border-amber-200 text-amber-800'
+                        : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                       }`}>
                       <div className="flex items-center justify-between text-[11px] font-semibold">
                         <span>Remaining Balance</span>
@@ -1109,7 +1211,7 @@ export default function TrackerPage() {
                   {/* Add Expense Form */}
                   <form onSubmit={handleAddExpense} className="bg-white p-3.5 rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col gap-3">
                     <h4 className="text-xs font-bold text-[#172554] tracking-wide uppercase">Add New Expense</h4>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
@@ -1175,25 +1277,34 @@ export default function TrackerPage() {
                     <h3 className="text-xs font-bold text-[#64748b] tracking-wider uppercase flex items-center gap-1.5">
                       <span>📋</span> EXPENSE HISTORY
                     </h3>
-                    <span className="text-[11px] font-semibold text-[#10b981] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
-                      {expenses.length} Entries
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => downloadExpensePDF({ monthlyBudget, expenses: monthlyExpenses, user, monthLabel: selectedMonthInfo.label })}
+                        className="flex items-center gap-1 px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
+                        title="Export PDF Statement"
+                      >
+                        <FiDownload size={11} /> Export PDF
+                      </button>
+                      <span className="text-[11px] font-semibold text-[#10b981] bg-[#f0fdf4] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                        {monthlyExpenses.length} Entries ({selectedMonthInfo.shortLabel})
+                      </span>
+                    </div>
                   </div>
 
                   {/* Scrollable list container */}
                   <div className="flex-1 overflow-y-auto space-y-2 pr-1.5">
-                    {expenses.length === 0 ? (
+                    {monthlyExpenses.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
-                        <span className="text-3xl mb-2">💸</span>
-                        <p className="text-sm font-bold text-[#172554]">No expenses logged yet</p>
-                        <p className="text-xs text-[#64748b]">Add your daily expenses on the left to calculate remaining balance!</p>
+                        <span className="text-3xl mb-2">🗓️</span>
+                        <p className="text-sm font-bold text-[#172554]">No expenses logged for {selectedMonthInfo.label}</p>
+                        <p className="text-xs text-[#64748b]">Add your daily expenses on the left to track this month!</p>
                       </div>
                     ) : (
                       (() => {
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
 
-                        const sorted = [...expenses].sort((a, b) => {
+                        const sorted = [...monthlyExpenses].sort((a, b) => {
                           const dateA = new Date(a.date || a.createdAt);
                           const dateB = new Date(b.date || b.createdAt);
                           return dateB - dateA; // latest first
@@ -1251,7 +1362,7 @@ export default function TrackerPage() {
                                 </span>
                                 <button
                                   onClick={() => handleDeleteExpense(exp.id)}
-                                  className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
+                                  className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all cursor-pointer"
                                   title="Delete expense"
                                 >
                                   <FiTrash2 size={12} />
