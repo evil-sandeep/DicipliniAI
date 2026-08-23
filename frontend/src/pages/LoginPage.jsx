@@ -58,38 +58,71 @@ function LoginPage() {
   return (
     <div className="min-h-screen w-full flex bg-gray-50 font-sans">
 
-      {/* Left Section: Visual/Illustration (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-[55%] relative items-center justify-center bg-slate-900 overflow-hidden">
-        {/* Subtle decorative background elements */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-orange-500/20 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-yellow-500/20 blur-[120px]" />
+      {/* Left Section: Minimalist Aesthetic Hero */}
+      <div className="hidden lg:flex lg:w-[55%] relative items-center justify-center bg-[#06080f] overflow-hidden select-none">
+        {/* Soft Ambient Brand Auroras */}
+        <div className="absolute top-[-10%] left-[-10%] w-[550px] h-[550px] rounded-full bg-[#10b981]/12 blur-[140px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#2dd4bf]/12 blur-[160px]" />
+        <div className="absolute top-[35%] left-[25%] w-[380px] h-[380px] rounded-full bg-[#00f5a0]/06 blur-[120px]" />
 
-        {/* Logo positioned at the absolute top-left of the entire left section */}
-        <Link to="/" className="absolute top-10 left-10 z-20 hover:opacity-80 transition-opacity flex items-center">
-          <img src="/logo.png" alt="DiscipliniOS Logo" className="h-22 object-contain" />
+        {/* Brand Logo - Top Left */}
+        <Link to="/" className="absolute top-10 left-10 z-20 hover:scale-105 transition-all">
+          <img
+            src="/logo.png"
+            alt="DiscipliniOS Logo"
+            className="h-24 md:h-28 w-auto object-contain drop-shadow-[0_0_35px_rgba(45,212,191,0.3)]"
+          />
         </Link>
 
-        {/* Illustration content container */}
-        <div className="relative z-10 flex flex-col items-center justify-center p-12 text-center text-white mt-8">
+        {/* Center Minimalist Aesthetic Scene */}
+        <div className="relative z-10 flex flex-col items-center justify-center p-12 text-center text-white mt-12 max-w-md">
 
-          <div className="w-[80%] max-w-md aspect-square mb-8 relative">
-            {/* Abstract modern illustration replacement */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-slate-800 to-slate-700 rounded-3xl border border-slate-600/50 shadow-2xl flex flex-col justify-end p-8 overflow-hidden">
-              {/* Decorative mock UI elements for the illustration */}
-              <div className="w-full flex justify-between items-end gap-4 h-48">
-                <div className="w-1/4 bg-orange-500/80 rounded-t-lg h-[40%] animate-[pulse_4s_ease-in-out_infinite]" />
-                <div className="w-1/4 bg-yellow-400/80 rounded-t-lg h-[70%] animate-[pulse_4s_ease-in-out_infinite_1s]" />
-                <div className="w-1/4 bg-white/20 rounded-t-lg h-[50%] animate-[pulse_4s_ease-in-out_infinite_2s]" />
-                <div className="w-1/4 bg-orange-400 rounded-t-lg h-[90%] animate-[pulse_4s_ease-in-out_infinite_3s]" />
+          {/* Minimal Floating Glassmorphic Streak Card */}
+          <div className="w-full bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent border border-emerald-500/20 backdrop-blur-2xl rounded-3xl p-7 shadow-[0_20px_60px_-15px_rgba(0,245,160,0.12)]">
+            
+            {/* Minimalist 7-Day Consistency Flow */}
+            <div className="flex items-center justify-between gap-2.5 pb-4 border-b border-white/[0.06]">
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                const isCompleted = idx < 6;
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-2 flex-1">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                        isCompleted
+                          ? 'bg-[#2dd4bf]/20 border border-[#2dd4bf]/40 text-[#2dd4bf] shadow-[0_0_12px_rgba(45,212,191,0.25)]'
+                          : 'bg-white/[0.04] border border-white/[0.08] text-slate-500'
+                      }`}
+                    >
+                      {isCompleted ? '✓' : ''}
+                    </div>
+                    <span className="text-[10px] font-semibold text-slate-400">{day}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Subtle Progress Bar */}
+            <div className="mt-5 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-pulse" />
+                  Weekly Discipline
+                </span>
+                <span className="text-[#2dd4bf] font-mono font-bold">92%</span>
               </div>
-              <div className="absolute top-8 left-8 right-8 bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10">
-                <div className="w-3/4 h-3 bg-white/20 rounded-full mb-3" />
-                <div className="w-1/2 h-3 bg-white/10 rounded-full" />
+              <div className="w-full h-2 bg-white/[0.05] rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                <div className="h-full bg-gradient-to-r from-[#10b981] via-[#2dd4bf] to-[#00f5a0] rounded-full w-[92%] shadow-[0_0_12px_rgba(45,212,191,0.4)]" />
               </div>
             </div>
           </div>
-          <h2 className="text-3xl font-bold mb-4">Visualize your discipline.</h2>
-          <p className="text-slate-300 max-w-md text-lg">Track your habits consistently and watch your progress grow day by day.</p>
+
+          {/* Minimal Slogan */}
+          <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-8 mb-2">
+            Master your <span className="bg-gradient-to-r from-white via-[#2dd4bf] to-[#00f5a0] bg-clip-text text-transparent">consistency.</span>
+          </h2>
+          <p className="text-slate-400 text-xs tracking-wider uppercase font-semibold">
+            Track habits • Control expenses • Evolve daily
+          </p>
         </div>
       </div>
 
@@ -98,9 +131,9 @@ function LoginPage() {
         <div className="w-full max-w-[420px]">
 
           {/* Mobile Logo (Visible only on small screens) */}
-          <div className="lg:hidden mb-10 flex justify-center">
+          <div className="lg:hidden mb-8 flex justify-center">
             <Link to="/" className="hover:opacity-80 transition-opacity">
-              <img src="/logo.png" alt="DiscipliniOS Logo" className="h-14 object-contain" />
+              <img src="/logo.png" alt="DiscipliniOS Logo" className="h-16 w-auto object-contain drop-shadow-md" />
             </Link>
           </div>
 
