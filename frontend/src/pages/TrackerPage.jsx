@@ -119,9 +119,7 @@ export default function TrackerPage() {
 
   // ── Monthly Expense State ────────────────────────────
   const [monthlyBudget, setMonthlyBudget] = useState(25000);
-  const [expenses, setExpenses] = useState([
-    { id: 'exp-1', title: 'Shopping', amount: 0, category: 'Shopping', date: new Date().toISOString().split('T')[0], createdAt: new Date().toISOString() }
-  ]);
+  const [expenses, setExpenses] = useState([]);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
   const [expenseTitle, setExpenseTitle] = useState('');
