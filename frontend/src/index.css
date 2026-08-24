@@ -420,7 +420,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: todayGlowPulse 2.2s ease-in-out infinite;
+  animation: todayGlowPulse 3.2s ease-in-out infinite;
 }
 
 .today-lighting-card::before {
@@ -438,7 +438,7 @@ body {
     #2dd4bf 88%,
     #00f5a0 100%
   );
-  animation: clockwiseSpin 2.2s linear infinite;
+  animation: clockwiseSpin 3.2s linear infinite;
   z-index: 1;
 }
 
