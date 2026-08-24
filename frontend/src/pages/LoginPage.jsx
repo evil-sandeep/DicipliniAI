@@ -91,43 +91,65 @@ function LoginPage() {
         <div className="relative z-10 flex flex-col items-center justify-center p-12 text-center text-white mt-12 max-w-md">
 
           {/* Minimal Floating Glassmorphic Streak Card */}
-          <div className="w-full bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent border border-emerald-500/20 backdrop-blur-2xl rounded-3xl p-7 shadow-[0_20px_60px_-15px_rgba(0,245,160,0.12)]">
-            
-            {/* Minimalist 7-Day Consistency Flow */}
-            <div className="flex items-center justify-between gap-2.5 pb-4 border-b border-white/[0.06]">
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
-                const isCompleted = idx < 6;
-                return (
-                  <div key={idx} className="flex flex-col items-center gap-2 flex-1">
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
-                        isCompleted
-                          ? 'bg-[#2dd4bf]/20 border border-[#2dd4bf]/40 text-[#2dd4bf] shadow-[0_0_12px_rgba(45,212,191,0.25)]'
-                          : 'bg-white/[0.04] border border-white/[0.08] text-slate-500'
-                      }`}
-                    >
-                      {isCompleted ? '✓' : ''}
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-400">{day}</span>
-                  </div>
-                );
-              })}
-            </div>
+          {(() => {
+            const dayOfWeek = new Date().getDay(); // 0: Sun, 1: Mon, ... 6: Sat
+            const todayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 0 for M, 1 for T, 2 for W, ... 6 for S
+            const progressPercent = Math.round(((todayIndex + 1) / 7) * 100);
 
-            {/* Subtle Progress Bar */}
-            <div className="mt-5 space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-pulse" />
-                  Weekly Discipline
-                </span>
-                <span className="text-[#2dd4bf] font-mono font-bold">92%</span>
+            return (
+              <div className="w-full bg-gradient-to-b from-white/[0.06] via-white/[0.02] to-transparent border border-emerald-500/20 backdrop-blur-2xl rounded-3xl p-7 shadow-[0_20px_60px_-15px_rgba(0,245,160,0.12)]">
+                
+                {/* Minimalist 7-Day Consistency Flow */}
+                <div className="flex items-center justify-between gap-2.5 pb-4 border-b border-white/[0.06]">
+                  {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                    const isCompleted = idx <= todayIndex;
+                    const isToday = idx === todayIndex;
+                    return (
+                      <div key={idx} className="flex flex-col items-center gap-2 flex-1">
+                        {isToday ? (
+                          <div className="today-lighting-card">
+                            <div className="today-lighting-inner shadow-[inset_0_0_8px_rgba(0,245,160,0.3)]">
+                              ✓
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold transition-all ${
+                              isCompleted
+                                ? 'bg-[#2dd4bf]/20 border border-[#2dd4bf]/40 text-[#2dd4bf] shadow-[0_0_12px_rgba(45,212,191,0.25)]'
+                                : 'bg-white/[0.04] border border-white/[0.08] text-slate-500'
+                            }`}
+                          >
+                            {isCompleted ? '✓' : ''}
+                          </div>
+                        )}
+                        <span className={`text-[10px] font-semibold transition-colors ${isToday ? 'text-[#00f5a0] font-bold drop-shadow-[0_0_8px_rgba(0,245,160,0.6)]' : isCompleted ? 'text-slate-300' : 'text-slate-500'}`}>
+                          {day}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Subtle Progress Bar */}
+                <div className="mt-5 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#2dd4bf] animate-pulse" />
+                      Weekly Discipline
+                    </span>
+                    <span className="text-[#2dd4bf] font-mono font-bold">{progressPercent}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-white/[0.05] rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#10b981] via-[#2dd4bf] to-[#00f5a0] rounded-full shadow-[0_0_12px_rgba(45,212,191,0.4)] transition-all duration-700"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="w-full h-2 bg-white/[0.05] rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
-                <div className="h-full bg-gradient-to-r from-[#10b981] via-[#2dd4bf] to-[#00f5a0] rounded-full w-[92%] shadow-[0_0_12px_rgba(45,212,191,0.4)]" />
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Minimal Slogan */}
           <h2 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white mt-8 mb-2">

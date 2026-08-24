@@ -390,3 +390,69 @@ body {
   border-radius: 9999px;
   animation: spin 0.7s linear infinite;
 }
+
+/* ─── Current Day Clockwise Lighting Animation ─────────── */
+@keyframes clockwiseSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes todayGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(45, 212, 191, 0.45), 0 0 24px rgba(0, 245, 160, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(45, 212, 191, 0.8), 0 0 36px rgba(0, 245, 160, 0.5);
+  }
+}
+
+.today-lighting-card {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  padding: 1.5px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: todayGlowPulse 2.2s ease-in-out infinite;
+}
+
+.today-lighting-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    transparent 55%,
+    rgba(45, 212, 191, 0.2) 70%,
+    #2dd4bf 88%,
+    #00f5a0 100%
+  );
+  animation: clockwiseSpin 2.2s linear infinite;
+  z-index: 1;
+}
+
+.today-lighting-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(0.75rem - 1.5px);
+  background: #061e1b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #00f5a0;
+}
