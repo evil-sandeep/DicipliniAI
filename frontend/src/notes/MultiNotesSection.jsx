@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FiFileText, FiTrash2, FiLoader, FiPlus } from 'react-icons/fi';
+import { FiFileText, FiLoader, FiPlus } from 'react-icons/fi';
 import { fetchAllNotes, createNote, updateNote, deleteNote } from './api';
 import { NewNotePrompt, NoteTitleEditor, NewNoteButton } from './NoteTitle';
+import { NoteDeleteButton, NoteDeleteEditorButton } from './NoteDelete';
 
 /**
  * MultiNotesSection
@@ -176,17 +177,14 @@ export default function MultiNotesSection() {
                   <p className="text-[10px] text-[#94a3b8] mt-0.5">
                     {formatDate(note.updatedAt || note.createdAt)}
                   </p>
-                  {/* Delete button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteNote(note._id);
-                    }}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-[#ef4444] hover:text-[#dc2626] transition-opacity cursor-pointer"
-                    title="Delete note"
-                  >
-                    <FiTrash2 size={11} />
-                  </button>
+                  {/* Delete button — from NoteDelete.jsx, shows confirm prompt */}
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <NoteDeleteButton
+                      noteTitle={note.title}
+                      onConfirmDelete={() => handleDeleteNote(note._id)}
+                      size="sm"
+                    />
+                  </div>
                 </div>
               );
             })
@@ -198,13 +196,18 @@ export default function MultiNotesSection() {
       <div className="flex-1 flex flex-col overflow-hidden bg-white">
         {selectedNote ? (
           <>
-            {/* Editor header — uses NoteTitleEditor from NoteTitle.jsx */}
+            {/* Editor header — NoteTitleEditor from NoteTitle.jsx + NoteDeleteEditorButton from NoteDelete.jsx */}
             <div className="px-6 pt-5 pb-3 border-b border-[#e2e8f0] flex items-center gap-3">
               <FiFileText className="text-[#8b5cf6] shrink-0" size={16} />
               <NoteTitleEditor
                 title={selectedNote.title}
                 onChange={handleTitleChange}
                 saveStatus={saveStatus}
+              />
+              {/* Always-visible Delete button in editor header */}
+              <NoteDeleteEditorButton
+                noteTitle={selectedNote.title}
+                onConfirmDelete={() => handleDeleteNote(selectedNote._id)}
               />
             </div>
 
