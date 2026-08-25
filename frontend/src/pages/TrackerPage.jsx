@@ -1061,7 +1061,11 @@ export default function TrackerPage() {
                           const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
                           const expDate = new Date(exp.date || exp.createdAt);
                           expDate.setHours(0, 0, 0, 0);
-                          const isBackDate = expDate < today;
+                          
+                          const createdAtDate = new Date(exp.createdAt || Date.now());
+                          createdAtDate.setHours(0, 0, 0, 0);
+                          
+                          const isBackDate = expDate < createdAtDate;
                           const isFuture = expDate > today;
 
                           const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-IN', {
