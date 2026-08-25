@@ -140,7 +140,9 @@ export async function downloadExpensePDF({ monthlyBudget = 0, expenses = [], use
   const tableRows = sortedExpenses.map((exp, index) => {
     const expDate = new Date(exp.date || exp.createdAt);
     expDate.setHours(0, 0, 0, 0);
-    const isBackDate = expDate < today;
+    const createdAtDate = new Date(exp.createdAt || Date.now());
+    createdAtDate.setHours(0, 0, 0, 0);
+    const isBackDate = expDate < createdAtDate;
 
     const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-IN', {
       day: 'numeric',
