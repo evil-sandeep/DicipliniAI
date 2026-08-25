@@ -1,9 +1,21 @@
 import mongoose from 'mongoose';
 
 /**
- * Note Schema
- * Each user gets one Notes document (upsert pattern).
- * The `content` field stores the full notepad text.
+ * singleNoteSchema
+ * Represents one individual note (title + content).
+ * Mongoose adds `_id`, `createdAt`, `updatedAt` automatically.
+ */
+const singleNoteSchema = new mongoose.Schema(
+  {
+    title: { type: String, default: 'Untitled Note' },
+    content: { type: String, default: '' },
+  },
+  { timestamps: true }
+);
+
+/**
+ * noteSchema
+ * One document per user — contains an array of their notes.
  */
 const noteSchema = new mongoose.Schema(
   {
@@ -11,12 +23,9 @@ const noteSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      unique: true, // one notepad per user
+      unique: true,
     },
-    content: {
-      type: String,
-      default: '',
-    },
+    notes: { type: [singleNoteSchema], default: [] },
   },
   { timestamps: true }
 );
