@@ -1,21 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  FiFileText,
-  FiPlus,
-  FiTrash2,
-  FiSave,
-  FiLoader,
-  FiEdit3,
-  FiCheck,
-} from 'react-icons/fi';
+import { FiFileText, FiTrash2, FiLoader, FiPlus } from 'react-icons/fi';
 import { fetchAllNotes, createNote, updateNote, deleteNote } from './api';
+import { NewNotePrompt, NoteTitleEditor, NewNoteButton } from './NoteTitle';
 
 /**
  * MultiNotesSection
  *
  * Full multiple-notes UI:
- *  - Left sidebar: list of all notes, "New Note" button
- *  - Right panel: selected note's title (editable) + content textarea
+ *  - Left sidebar: notes list + NewNoteButton → shows NewNotePrompt (from NoteTitle.jsx)
+ *  - Right panel: NoteTitleEditor (from NoteTitle.jsx) + content textarea
  *  - Auto-saves title and content to the backend with a 1-second debounce
  *  - Notes persist in MongoDB per user → available on any device after login
  */
@@ -23,9 +16,9 @@ export default function MultiNotesSection() {
   const [notes, setNotes] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showNewPrompt, setShowNewPrompt] = useState(false); // controls NewNotePrompt visibility
   const [creating, setCreating] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
-  const [editingTitle, setEditingTitle] = useState(false);
 
   const saveTimerRef = useRef(null);
 
@@ -67,22 +60,22 @@ export default function MultiNotesSection() {
     scheduleSave(selectedId, { content: value });
   };
 
-  // ── Handle title change ──────────────────────────────
-  const handleTitleChange = (e) => {
-    const value = e.target.value;
+  // ── Handle title change (from NoteTitleEditor) ────────
+  const handleTitleChange = (newTitle) => {
     setNotes((prev) =>
-      prev.map((n) => (n._id === selectedId ? { ...n, title: value } : n))
+      prev.map((n) => (n._id === selectedId ? { ...n, title: newTitle } : n))
     );
-    scheduleSave(selectedId, { title: value });
+    scheduleSave(selectedId, { title: newTitle });
   };
 
-  // ── Create new note ──────────────────────────────────
-  const handleCreateNote = async () => {
+  // ── Create new note (from NewNotePrompt confirm) ──────
+  const handleConfirmCreate = async (title) => {
     setCreating(true);
     try {
-      const newNote = await createNote({ title: 'Untitled Note', content: '' });
+      const newNote = await createNote({ title, content: '' });
       setNotes((prev) => [newNote, ...prev]);
       setSelectedId(newNote._id);
+      setShowNewPrompt(false);
     } catch (err) {
       console.error('Failed to create note:', err);
     } finally {
@@ -123,7 +116,7 @@ export default function MultiNotesSection() {
   }
 
   return (
-    <div className="flex h-full gap-0 overflow-hidden rounded-none">
+    <div className="flex h-full gap-0 overflow-hidden">
       {/* ── Left Sidebar: Notes List ─────────────────── */}
       <div
         className="flex flex-col shrink-0 border-r border-[#e2e8f0] bg-[#faf8ff]"
@@ -134,20 +127,27 @@ export default function MultiNotesSection() {
           <span className="text-xs font-extrabold tracking-widest text-[#8b5cf6] uppercase">
             My Notes
           </span>
-          <button
-            onClick={handleCreateNote}
-            disabled={creating}
-            title="New Note"
-            className="flex items-center gap-1 text-[10px] font-bold bg-[#8b5cf6] text-white px-2 py-1 rounded-lg hover:bg-[#7c3aed] transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {creating ? <FiLoader size={10} className="animate-spin" /> : <FiPlus size={10} />}
-            New
-          </button>
+          {/* NewNoteButton from NoteTitle.jsx */}
+          <NewNoteButton
+            onClick={() => setShowNewPrompt(true)}
+            disabled={showNewPrompt}
+          />
         </div>
+
+        {/* NewNotePrompt inline (from NoteTitle.jsx) — appears when user clicks New */}
+        {showNewPrompt && (
+          <div className="pt-2">
+            <NewNotePrompt
+              onConfirm={handleConfirmCreate}
+              onCancel={() => setShowNewPrompt(false)}
+              loading={creating}
+            />
+          </div>
+        )}
 
         {/* Notes list */}
         <div className="flex-1 overflow-y-auto py-1">
-          {notes.length === 0 ? (
+          {notes.length === 0 && !showNewPrompt ? (
             <p className="text-center text-[#94a3b8] text-xs px-3 pt-8 leading-relaxed">
               No notes yet.
               <br />
@@ -198,57 +198,17 @@ export default function MultiNotesSection() {
       <div className="flex-1 flex flex-col overflow-hidden bg-white">
         {selectedNote ? (
           <>
-            {/* Editor header */}
-            <div className="px-6 pt-5 pb-3 border-b border-[#e2e8f0] flex items-center justify-between gap-3">
-              <div className="flex-1 flex items-center gap-2">
-                <FiFileText className="text-[#8b5cf6] shrink-0" size={16} />
-                {editingTitle ? (
-                  <input
-                    autoFocus
-                    type="text"
-                    value={selectedNote.title}
-                    onChange={handleTitleChange}
-                    onBlur={() => setEditingTitle(false)}
-                    onKeyDown={(e) => e.key === 'Enter' && setEditingTitle(false)}
-                    className="flex-1 text-base font-bold text-[#172554] bg-transparent outline-none border-b border-[#8b5cf6]"
-                  />
-                ) : (
-                  <h2
-                    onClick={() => setEditingTitle(true)}
-                    title="Click to edit title"
-                    className="flex-1 text-base font-bold text-[#172554] cursor-pointer hover:text-[#6d28d9] truncate transition-colors"
-                  >
-                    {selectedNote.title || 'Untitled Note'}
-                  </h2>
-                )}
-                <button
-                  onClick={() => setEditingTitle((v) => !v)}
-                  className="text-[#94a3b8] hover:text-[#8b5cf6] transition-colors cursor-pointer"
-                  title="Edit title"
-                >
-                  {editingTitle ? <FiCheck size={14} /> : <FiEdit3 size={14} />}
-                </button>
-              </div>
-
-              {/* Save status */}
-              <div className="text-xs flex items-center gap-1 shrink-0">
-                {saveStatus === 'saving' && (
-                  <span className="text-[#8b5cf6] flex items-center gap-1">
-                    <FiLoader className="animate-spin" size={11} /> Saving…
-                  </span>
-                )}
-                {saveStatus === 'saved' && (
-                  <span className="text-[#22c55e] flex items-center gap-1">
-                    <FiSave size={11} /> Saved
-                  </span>
-                )}
-                {saveStatus === 'error' && (
-                  <span className="text-[#ef4444]">Save failed</span>
-                )}
-              </div>
+            {/* Editor header — uses NoteTitleEditor from NoteTitle.jsx */}
+            <div className="px-6 pt-5 pb-3 border-b border-[#e2e8f0] flex items-center gap-3">
+              <FiFileText className="text-[#8b5cf6] shrink-0" size={16} />
+              <NoteTitleEditor
+                title={selectedNote.title}
+                onChange={handleTitleChange}
+                saveStatus={saveStatus}
+              />
             </div>
 
-            {/* Textarea */}
+            {/* Content textarea */}
             <textarea
               value={selectedNote.content}
               onChange={handleContentChange}
@@ -265,7 +225,7 @@ export default function MultiNotesSection() {
               Select a note from the sidebar or create a new one.
             </p>
             <button
-              onClick={handleCreateNote}
+              onClick={() => setShowNewPrompt(true)}
               className="mt-2 flex items-center gap-1.5 text-xs font-bold bg-[#8b5cf6] text-white px-4 py-2 rounded-xl hover:bg-[#7c3aed] transition-colors cursor-pointer"
             >
               <FiPlus size={13} /> New Note
