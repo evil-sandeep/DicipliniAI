@@ -43,7 +43,7 @@ export default function GoalsSection() {
     return Math.round((completed / milestones.length) * 100);
   };
 
-  const handleAddGoal = async (e) => {
+  const handleAddGoal = async (id, e) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
     
