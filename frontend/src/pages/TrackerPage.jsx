@@ -34,6 +34,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { downloadExpensePDF } from '../utils/generateExpensePdf';
 import NotesSection from '../notes/NotesSection';
+import GoalsSection from '../goals/GoalsSection';
 const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
@@ -1429,28 +1430,7 @@ export default function TrackerPage() {
 
             {/* TAB 5: GOALS VIEW */}
             {activeTab === 'GOALS' && (
-              <div className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
-                <div className="border-b border-[#cbd5e1] pb-3">
-                  <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
-                    <FiTarget className="text-[#f59e0b]" /> Weekly & Monthly Goals
-                  </h2>
-                  <p className="text-xs text-[#64748b]">Set target milestones for personal growth</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-[#fffbeb] border border-[#fde68a] p-4 rounded-2xl shadow-sm">
-                    <span className="text-xs font-bold text-[#d97706] tracking-wider uppercase">🎯 Short-term Target</span>
-                    <h3 className="text-base font-bold text-[#172554] mt-1">Complete 80%+ Habits This Week</h3>
-                    <p className="text-xs text-[#64748b] mt-1">Keep ticking off daily tasks consistently to build momentum.</p>
-                  </div>
-
-                  <div className="bg-[#eef2ff] border border-[#c7d2fe] p-4 rounded-2xl shadow-sm">
-                    <span className="text-xs font-bold text-[#4f46e5] tracking-wider uppercase">🚀 Monthly Vision</span>
-                    <h3 className="text-base font-bold text-[#172554] mt-1">Master New Skill Routine</h3>
-                    <p className="text-xs text-[#64748b] mt-1">Practice coding and health habits without missing 3 consecutive days.</p>
-                  </div>
-                </div>
-              </div>
+              <GoalsSection />
             )}
 
             {/* TAB 6: NOTES VIEW */}

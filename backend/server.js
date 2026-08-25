@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js';
 import trackerRoutes from './routes/tracker.js';
 import aiRoutes from './routes/ai.js';
 import notesRoutes from './notes/routes.js';
+import goalsRoutes from './goals/routes.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tracker', trackerRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/notes', notesRoutes);
+app.use('/api/goals', goalsRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
