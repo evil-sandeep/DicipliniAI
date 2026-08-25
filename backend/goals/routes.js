@@ -24,15 +24,15 @@ router.get('/', async (req, res) => {
 // ─────────────────────────────────────────────────────────
 // POST /api/goals
 // Creates a new goal and returns it.
-// Body: { type: 'short-term'|'monthly', label, title, description }
+// Body: { type: 'short-term'|'monthly', label, title, description, deadline, milestones }
 // ─────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
-    const { type = 'short-term', label = '', title = '', description = '' } = req.body;
+    const { type = 'short-term', label = '', title = '', description = '', deadline, milestones = [] } = req.body;
 
     const doc = await Goals.findOneAndUpdate(
       { user: req.user.userId },
-      { $push: { goals: { type, label, title, description } } },
+      { $push: { goals: { type, label, title, description, deadline, milestones } } },
       { upsert: true, new: true }
     );
 
@@ -47,18 +47,22 @@ router.post('/', async (req, res) => {
 // ─────────────────────────────────────────────────────────
 // PUT /api/goals/:id
 // Updates a specific goal's fields.
-// Body: { type?, label?, title?, description? }
+// Body: { type?, label?, title?, description?, status?, progress?, deadline?, milestones? }
 // ─────────────────────────────────────────────────────────
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { type, label, title, description } = req.body;
+    const { type, label, title, description, status, progress, deadline, milestones } = req.body;
 
     const updateFields = {};
     if (type !== undefined) updateFields['goals.$.type'] = type;
     if (label !== undefined) updateFields['goals.$.label'] = label;
     if (title !== undefined) updateFields['goals.$.title'] = title;
     if (description !== undefined) updateFields['goals.$.description'] = description;
+    if (status !== undefined) updateFields['goals.$.status'] = status;
+    if (progress !== undefined) updateFields['goals.$.progress'] = progress;
+    if (deadline !== undefined) updateFields['goals.$.deadline'] = deadline;
+    if (milestones !== undefined) updateFields['goals.$.milestones'] = milestones;
 
     await Goals.findOneAndUpdate(
       { user: req.user.userId, 'goals._id': id },

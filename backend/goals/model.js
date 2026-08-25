@@ -14,6 +14,20 @@ const goalItemSchema = new mongoose.Schema(
     label: { type: String, default: '' },     // e.g. "🎯 Short-term Target"
     title: { type: String, default: '' },     // e.g. "Complete 80%+ Habits This Week"
     description: { type: String, default: '' }, // supporting text
+    status: {
+      type: String,
+      enum: ['not-started', 'in-progress', 'completed'],
+      default: 'not-started',
+    },
+    progress: { type: Number, default: 0 },
+    deadline: { type: Date },
+    milestones: {
+      type: [{
+        title: { type: String, required: true },
+        completed: { type: Boolean, default: false }
+      }],
+      default: []
+    }
   },
   { timestamps: true }
 );
