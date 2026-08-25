@@ -33,6 +33,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
 import { downloadExpensePDF } from '../utils/generateExpensePdf';
+import NotesSection from '../notes/NotesSection';
 const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
@@ -144,7 +145,6 @@ export default function TrackerPage() {
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoCat, setNewTodoCat] = useState('Personal');
   const [todoFilter, setTodoFilter] = useState('all');
-  const [notesText, setNotesText] = useState('📌 Quick Notes & Ideas:\n- Focus on consistency over intensity.\n- Small daily wins build big habits.');
 
   // ── Monthly Expense State ────────────────────────────
   const [monthlyBudget, setMonthlyBudget] = useState(25000);
@@ -1455,24 +1455,7 @@ export default function TrackerPage() {
 
             {/* TAB 6: NOTES VIEW */}
             {activeTab === 'NOTES' && (
-              <div className="p-6 max-w-2xl mx-auto flex flex-col h-full gap-4">
-                <div className="border-b border-[#cbd5e1] pb-2 flex justify-between items-center">
-                  <div>
-                    <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
-                      <FiFileText className="text-[#8b5cf6]" /> Quick Notepad
-                    </h2>
-                    <p className="text-xs text-[#64748b]">Write down quick thoughts, reflections and reminders</p>
-                  </div>
-                </div>
-
-                <textarea
-                  value={notesText}
-                  onChange={e => setNotesText(e.target.value)}
-                  placeholder="Type your notes here..."
-                  className="flex-1 w-full p-4 rounded-2xl border border-[#cbd5e1] text-sm bg-white outline-none focus:border-[#8b5cf6] font-mono leading-relaxed text-[#172554] shadow-sm resize-none"
-                  style={{ minHeight: 280 }}
-                />
-              </div>
+              <NotesSection />
             )}
 
           </div>

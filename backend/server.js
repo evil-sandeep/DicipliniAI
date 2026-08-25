@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import trackerRoutes from './routes/tracker.js';
 import aiRoutes from './routes/ai.js';
+import notesRoutes from './notes/routes.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/tracker', trackerRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/notes', notesRoutes);
 
 app.get('/', (req, res) => {
   res.send('API is running...');
