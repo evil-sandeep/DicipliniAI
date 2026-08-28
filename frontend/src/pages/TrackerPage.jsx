@@ -1100,19 +1100,6 @@ export default function TrackerPage() {
                     </div>
                   </div>
 
-                  {/* Previous Week Spent Banner */}
-                  <div className="flex items-center justify-between bg-[#fdf4ff] border border-[#e9d5ff] rounded-xl px-4 py-2.5 shadow-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">📅</span>
-                      <div>
-                        <p className="text-[11px] font-bold text-[#7c3aed] uppercase tracking-wide">Last Week Spent</p>
-                        <p className="text-[10px] text-[#a78bfa] font-medium">{prevWeekLabel}</p>
-                      </div>
-                    </div>
-                    <span className="text-lg font-extrabold text-[#7c3aed]">
-                      ₹{prevWeekSpent.toLocaleString('en-IN')}
-                    </span>
-                  </div>
 
                   {/* Progress Bar */}
                   <div className="bg-white p-3 rounded-xl border border-[#cbd5e1] shadow-sm space-y-1">
@@ -1199,6 +1186,9 @@ export default function TrackerPage() {
                       <span>📋</span> EXPENSE HISTORY
                     </h3>
                     <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-[#7c3aed] bg-[#fdf4ff] px-2 py-0.5 rounded-full border border-[#e9d5ff]" title={prevWeekLabel}>
+                        Last week: ₹{prevWeekSpent.toLocaleString('en-IN')}
+                      </span>
                       <button
                         onClick={() => downloadExpensePDF({ monthlyBudget, expenses: monthlyExpenses, user, monthLabel: selectedMonthInfo.label })}
                         className="flex items-center gap-1 px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-lg text-xs font-bold shadow-xs transition-all cursor-pointer"
