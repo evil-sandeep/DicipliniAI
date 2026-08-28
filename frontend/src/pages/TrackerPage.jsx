@@ -1321,7 +1321,7 @@ export default function TrackerPage() {
                       <span>📋</span> EXPENSE HISTORY
                     </h3>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-[#7c3aed] bg-[#fdf4ff] px-2 py-0.5 rounded-full border border-[#e9d5ff]" title={prevWeekLabel}>
+                      <span className="text-[11px] font-semibold text-[#7c3aed] bg-[#fdf4ff] px-2.5 py-0.5 rounded-full border border-[#e9d5ff]" title={prevWeekLabel}>
                         Last week: ₹{prevWeekSpent.toLocaleString('en-IN')}
                       </span>
                       <button
