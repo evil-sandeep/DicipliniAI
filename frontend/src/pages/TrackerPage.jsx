@@ -1035,7 +1035,7 @@ export default function TrackerPage() {
                     <div className="bg-white p-3 rounded-xl border border-[#cbd5e1] shadow-sm flex flex-col justify-between">
                       <div className="flex items-center justify-between text-[11px] text-[#64748b] font-semibold">
                         <span>Monthly Budget</span>
-                        <FiDollarSign className="text-[#10b981]" />
+                        <span className="text-[#10b981] font-bold text-sm">₹</span>
                       </div>
                       <div className="mt-1.5">
                         <span className="text-xl font-extrabold text-[#172554]">₹{monthlyBudget.toLocaleString('en-IN')}</span>
