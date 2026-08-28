@@ -1259,13 +1259,6 @@ export default function TrackerPage() {
                                 }`}>
                                   {isIncome ? '+' : '-'}₹{Number(exp.amount).toLocaleString('en-IN')}
                                 </span>
-                                <button
-                                  onClick={() => handleDeleteExpense(exp.id)}
-                                  className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                                  title="Delete expense"
-                                >
-                                  <FiTrash2 size={12} />
-                                </button>
                               </div>
                             </div>
                           );
