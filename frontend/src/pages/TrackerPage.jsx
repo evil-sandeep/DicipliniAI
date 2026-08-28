@@ -629,21 +629,19 @@ export default function TrackerPage() {
             <div className="flex gap-1 bg-[#f1f5f9] p-1 rounded-xl mb-4 border border-[#e2e8f0]">
               <button
                 onClick={() => setBudgetModalTab('set')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  budgetModalTab === 'set'
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${budgetModalTab === 'set'
                     ? 'bg-white text-[#10b981] shadow-sm'
                     : 'text-[#64748b] hover:text-[#172554]'
-                }`}
+                  }`}
               >
                 💰 Set Budget
               </button>
               <button
                 onClick={() => setBudgetModalTab('income')}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  budgetModalTab === 'income'
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${budgetModalTab === 'income'
                     ? 'bg-white text-[#6366f1] shadow-sm'
                     : 'text-[#64748b] hover:text-[#172554]'
-                }`}
+                  }`}
               >
                 ➕ Add Income
               </button>
@@ -694,7 +692,7 @@ export default function TrackerPage() {
                     <input
                       autoFocus
                       type="text"
-                      placeholder="e.g. Papa ne diya, Freelance project, Side income…"
+                      placeholder="e.g. Gift, Freelance project, Side income…"
                       value={incomeReason}
                       onChange={e => setIncomeReason(e.target.value)}
                       className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] font-medium text-[#172554]"
@@ -838,8 +836,8 @@ export default function TrackerPage() {
 
                     <div
                       className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${msg.sender === 'user'
-                          ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
-                          : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
+                        ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
+                        : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
                         }`}
                     >
                       {formattedContent}
@@ -988,7 +986,7 @@ export default function TrackerPage() {
 
             {/* TAB 1: THIS WEEK (HABIT TRACKER MATRIX) */}
             {activeTab === 'THIS WEEK' && (
-              <ThisWeekSection 
+              <ThisWeekSection
                 columns={columns}
                 days={days}
                 checked={checked}
@@ -1362,10 +1360,10 @@ export default function TrackerPage() {
                           const catStyle = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.Others;
                           const expDate = new Date(exp.date || exp.createdAt);
                           expDate.setHours(0, 0, 0, 0);
-                          
+
                           const createdAtDate = new Date(exp.createdAt || Date.now());
                           createdAtDate.setHours(0, 0, 0, 0);
-                          
+
                           const isBackDate = expDate < createdAtDate;
                           const isFuture = expDate > today;
                           const isIncome = exp.type === 'income';
@@ -1379,11 +1377,10 @@ export default function TrackerPage() {
                           return (
                             <div
                               key={exp.id}
-                              className={`bg-white p-3 rounded-xl border shadow-sm flex items-center justify-between gap-3 transition-all ${
-                                isIncome
+                              className={`bg-white p-3 rounded-xl border shadow-sm flex items-center justify-between gap-3 transition-all ${isIncome
                                   ? 'border-[#bbf7d0] hover:border-[#22c55e] bg-[#f0fdf4]/60'
                                   : 'border-[#cbd5e1] hover:border-[#10b981]'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 {isIncome ? (
@@ -1425,9 +1422,8 @@ export default function TrackerPage() {
                               </div>
 
                               <div className="flex items-center gap-2.5 shrink-0">
-                                <span className={`text-sm font-extrabold ${
-                                  isIncome ? 'text-[#16a34a]' : 'text-[#ef4444]'
-                                }`}>
+                                <span className={`text-sm font-extrabold ${isIncome ? 'text-[#16a34a]' : 'text-[#ef4444]'
+                                  }`}>
                                   {isIncome ? '+' : '-'}₹{Number(exp.amount).toLocaleString('en-IN')}
                                 </span>
                               </div>
