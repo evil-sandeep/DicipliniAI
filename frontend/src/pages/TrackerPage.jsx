@@ -1193,13 +1193,6 @@ export default function TrackerPage() {
                       >
                         <FiEdit3 size={12} /> Set Budget
                       </button>
-
-                      <button
-                        onClick={() => { setIncomeReason(''); setIncomeAmount(''); setBudgetModalTab('income'); setShowBudgetModal(true); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-[#eef2ff] border border-[#c7d2fe] rounded-xl text-xs font-bold text-[#6366f1] hover:bg-[#e0e7ff] transition-all shadow-sm shrink-0 cursor-pointer"
-                      >
-                        <FiPlus size={12} /> Add Income
-                      </button>
                     </div>
                   </div>
 
