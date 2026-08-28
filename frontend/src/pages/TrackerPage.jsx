@@ -123,7 +123,10 @@ export default function TrackerPage() {
   const [expenses, setExpenses] = useState([]);
   const [selectedMonthOffset, setSelectedMonthOffset] = useState(0); // 0 = current month, -1 = prev, +1 = next
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [budgetModalTab, setBudgetModalTab] = useState('set'); // 'set' | 'income'
   const [budgetInput, setBudgetInput] = useState('');
+  const [incomeReason, setIncomeReason] = useState('');
+  const [incomeAmount, setIncomeAmount] = useState('');
   const [expenseTitle, setExpenseTitle] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCat, setExpenseCat] = useState('Shopping');
@@ -247,6 +250,29 @@ export default function TrackerPage() {
     saveToBackend(columns, checked, todos, parsed, expenses);
   };
 
+  const handleAddIncome = (e) => {
+    if (e) e.preventDefault();
+    const amt = Number(incomeAmount);
+    if (!incomeReason.trim() || isNaN(amt) || amt <= 0) return;
+    const newBudget = monthlyBudget + amt;
+    const incomeEntry = {
+      id: `inc-${Date.now()}`,
+      title: incomeReason.trim(),
+      amount: amt,
+      category: 'Income',
+      type: 'income',
+      date: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
+    };
+    const updatedExpenses = [incomeEntry, ...expenses];
+    setMonthlyBudget(newBudget);
+    setExpenses(updatedExpenses);
+    setShowBudgetModal(false);
+    setIncomeReason('');
+    setIncomeAmount('');
+    saveToBackend(columns, checked, todos, newBudget, updatedExpenses);
+  };
+
   const handleAddExpense = (e) => {
     if (e) e.preventDefault();
     const amt = Number(expenseAmount);
@@ -269,9 +295,15 @@ export default function TrackerPage() {
   };
 
   const handleDeleteExpense = (id) => {
+    const expToDelete = expenses.find(exp => exp.id === id);
     const updatedExpenses = expenses.filter(exp => exp.id !== id);
+    // If deleting an income entry, reduce the budget by that income amount
+    const newBudget = expToDelete?.type === 'income'
+      ? Math.max(0, monthlyBudget - Number(expToDelete.amount))
+      : monthlyBudget;
     setExpenses(updatedExpenses);
-    saveToBackend(columns, checked, todos, monthlyBudget, updatedExpenses);
+    if (expToDelete?.type === 'income') setMonthlyBudget(newBudget);
+    saveToBackend(columns, checked, todos, newBudget, updatedExpenses);
   };
 
   // Month navigation helper
@@ -295,10 +327,17 @@ export default function TrackerPage() {
     return expDate && String(expDate).startsWith(selectedMonthInfo.monthKey);
   });
 
-  // Expense calculations for the selected month
-  const totalSpent = monthlyExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
-  const remainingBalance = monthlyBudget - totalSpent;
-  const spentPercentage = monthlyBudget > 0 ? Math.min(100, Math.round((totalSpent / monthlyBudget) * 100)) : 0;
+  // Expense calculations for the selected month (income entries excluded from totalSpent)
+  const totalSpent = monthlyExpenses
+    .filter(exp => exp.type !== 'income')
+    .reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  // Effective budget for selected month = monthlyBudget (base) + income entries for that month
+  const monthlyIncomeAdded = monthlyExpenses
+    .filter(exp => exp.type === 'income')
+    .reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  const effectiveBudget = monthlyBudget; // monthlyBudget already includes all added income
+  const remainingBalance = effectiveBudget - totalSpent;
+  const spentPercentage = effectiveBudget > 0 ? Math.min(100, Math.round((totalSpent / effectiveBudget) * 100)) : 0;
 
   // ── Habit Progress ───────────────────────────────────
   const days = getWeekDates(weekOffset);
@@ -450,44 +489,128 @@ export default function TrackerPage() {
         </div>
       )}
 
-      {/* ── Budget Modal ───────────────────────────────── */}
+      {/* ── Budget Modal (two-tab: Set Budget / Add Income) ───── */}
       {showBudgetModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowBudgetModal(false)}>
           <div
-            className="bg-[#fffcf5] rounded-2xl p-6 w-84 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
+            className="bg-[#fffcf5] rounded-2xl p-6 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
+            style={{ width: 360 }}
             onClick={e => e.stopPropagation()}
           >
             <button onClick={() => setShowBudgetModal(false)} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
               <FiX size={18} />
             </button>
-            <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
-            <p className="text-xs text-[#7c8499] mb-4">Enter your total budget for this month (e.g. 25000)</p>
 
-            <form onSubmit={handleSaveBudget}>
-              <div className="relative mb-4">
-                <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
-                <input
-                  autoFocus
-                  type="number"
-                  placeholder="25000"
-                  value={budgetInput}
-                  onChange={e => setBudgetInput(e.target.value)}
-                  className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#10b981] font-semibold text-[#172554]"
-                />
-              </div>
+            {/* Tab Switcher */}
+            <div className="flex gap-1 bg-[#f1f5f9] p-1 rounded-xl mb-4 border border-[#e2e8f0]">
+              <button
+                onClick={() => setBudgetModalTab('set')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  budgetModalTab === 'set'
+                    ? 'bg-white text-[#10b981] shadow-sm'
+                    : 'text-[#64748b] hover:text-[#172554]'
+                }`}
+              >
+                💰 Set Budget
+              </button>
+              <button
+                onClick={() => setBudgetModalTab('income')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  budgetModalTab === 'income'
+                    ? 'bg-white text-[#6366f1] shadow-sm'
+                    : 'text-[#64748b] hover:text-[#172554]'
+                }`}
+              >
+                ➕ Add Income
+              </button>
+            </div>
 
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all"
-                >
-                  Save Budget
-                </button>
-              </div>
-            </form>
+            {/* Tab: Set Budget */}
+            {budgetModalTab === 'set' && (
+              <>
+                <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
+                <p className="text-xs text-[#7c8499] mb-4">Enter your base salary / monthly income for this month.</p>
+                <form onSubmit={handleSaveBudget}>
+                  <div className="relative mb-4">
+                    <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
+                    <input
+                      autoFocus
+                      type="number"
+                      placeholder="25000"
+                      value={budgetInput}
+                      onChange={e => setBudgetInput(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#10b981] font-semibold text-[#172554]"
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all"
+                    >
+                      Save Budget
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {/* Tab: Add Income */}
+            {budgetModalTab === 'income' && (
+              <>
+                <h3 className="text-base font-bold text-[#172554] mb-1">Add Extra Income</h3>
+                <p className="text-xs text-[#7c8499] mb-1">Current budget: <span className="font-bold text-[#10b981]">₹{monthlyBudget.toLocaleString('en-IN')}</span></p>
+                <p className="text-xs text-[#7c8499] mb-4">Add money you received (freelance, bonus, gift, etc.) — it will be added to your budget.</p>
+                <form onSubmit={handleAddIncome}>
+                  {/* Reason / Source */}
+                  <div className="mb-3">
+                    <label className="text-[11px] font-bold text-[#64748b] uppercase tracking-wide mb-1 block">Where did this money come from?</label>
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="e.g. Papa ne diya, Freelance project, Side income…"
+                      value={incomeReason}
+                      onChange={e => setIncomeReason(e.target.value)}
+                      className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] font-medium text-[#172554]"
+                    />
+                  </div>
+                  {/* Amount */}
+                  <div className="mb-4">
+                    <label className="text-[11px] font-bold text-[#64748b] uppercase tracking-wide mb-1 block">Amount</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
+                      <input
+                        type="number"
+                        placeholder="500"
+                        value={incomeAmount}
+                        onChange={e => setIncomeAmount(e.target.value)}
+                        className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] font-semibold text-[#172554]"
+                      />
+                    </div>
+                  </div>
+                  {/* Preview */}
+                  {incomeAmount && !isNaN(Number(incomeAmount)) && Number(incomeAmount) > 0 && (
+                    <div className="mb-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl px-3 py-2 text-xs text-[#16a34a] font-semibold">
+                      ✅ New budget will be: <span className="font-extrabold">₹{(monthlyBudget + Number(incomeAmount)).toLocaleString('en-IN')}</span>
+                      <span className="ml-1 text-[#22c55e]">(+₹{Number(incomeAmount).toLocaleString('en-IN')})</span>
+                    </div>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#6366f1] hover:bg-[#4f46e5] shadow-sm transition-all"
+                    >
+                      Add Income
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -891,10 +1014,17 @@ export default function TrackerPage() {
                       </button>
 
                       <button
-                        onClick={() => { setBudgetInput(monthlyBudget.toString()); setShowBudgetModal(true); }}
+                        onClick={() => { setBudgetInput(monthlyBudget.toString()); setBudgetModalTab('set'); setShowBudgetModal(true); }}
                         className="flex items-center gap-1 px-3 py-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs font-bold text-[#16a34a] hover:bg-[#dcfce7] transition-all shadow-sm shrink-0 cursor-pointer"
                       >
                         <FiEdit3 size={12} /> Set Budget
+                      </button>
+
+                      <button
+                        onClick={() => { setIncomeReason(''); setIncomeAmount(''); setBudgetModalTab('income'); setShowBudgetModal(true); }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-[#eef2ff] border border-[#c7d2fe] rounded-xl text-xs font-bold text-[#6366f1] hover:bg-[#e0e7ff] transition-all shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <FiPlus size={12} /> Add Income
                       </button>
                     </div>
                   </div>
@@ -1067,6 +1197,7 @@ export default function TrackerPage() {
                           
                           const isBackDate = expDate < createdAtDate;
                           const isFuture = expDate > today;
+                          const isIncome = exp.type === 'income';
 
                           const formattedDate = new Date(exp.date || Date.now()).toLocaleDateString('en-IN', {
                             day: 'numeric',
@@ -1077,25 +1208,40 @@ export default function TrackerPage() {
                           return (
                             <div
                               key={exp.id}
-                              className="bg-white p-3 rounded-xl border border-[#cbd5e1] hover:border-[#10b981] shadow-sm flex items-center justify-between gap-3 transition-all"
+                              className={`bg-white p-3 rounded-xl border shadow-sm flex items-center justify-between gap-3 transition-all ${
+                                isIncome
+                                  ? 'border-[#bbf7d0] hover:border-[#22c55e] bg-[#f0fdf4]/60'
+                                  : 'border-[#cbd5e1] hover:border-[#10b981]'
+                              }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <span
-                                  className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0"
-                                  style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
-                                >
-                                  {catStyle.emoji} {exp.category}
-                                </span>
+                                {isIncome ? (
+                                  <span className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0 bg-[#dcfce7] text-[#16a34a] border-[#bbf7d0]">
+                                    💚 Income
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="px-2 py-0.5 rounded-lg text-xs font-bold border shrink-0"
+                                    style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                                  >
+                                    {catStyle.emoji} {exp.category}
+                                  </span>
+                                )}
 
                                 <div className="flex flex-col min-w-0">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-xs font-bold text-[#172554] truncate">{exp.title}</span>
-                                    {isBackDate && (
+                                    {isIncome && (
+                                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac] shrink-0">
+                                        ✨ Added to Budget
+                                      </span>
+                                    )}
+                                    {!isIncome && isBackDate && (
                                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#fef3c7] text-[#b45309] border border-[#fde68a] shrink-0">
                                         📅 Back Date
                                       </span>
                                     )}
-                                    {isFuture && (
+                                    {!isIncome && isFuture && (
                                       <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#ede9fe] text-[#7c3aed] border border-[#ddd6fe] shrink-0">
                                         🔮 Upcoming
                                       </span>
@@ -1108,8 +1254,10 @@ export default function TrackerPage() {
                               </div>
 
                               <div className="flex items-center gap-2.5 shrink-0">
-                                <span className="text-sm font-extrabold text-[#ef4444]">
-                                  -₹{Number(exp.amount).toLocaleString('en-IN')}
+                                <span className={`text-sm font-extrabold ${
+                                  isIncome ? 'text-[#16a34a]' : 'text-[#ef4444]'
+                                }`}>
+                                  {isIncome ? '+' : '-'}₹{Number(exp.amount).toLocaleString('en-IN')}
                                 </span>
                                 <button
                                   onClick={() => handleDeleteExpense(exp.id)}

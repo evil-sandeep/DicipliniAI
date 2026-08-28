@@ -20,6 +20,7 @@ const expenseSchema = new mongoose.Schema({
   title: { type: String, required: true },
   amount: { type: Number, required: true },
   category: { type: String, default: 'Others' },
+  type: { type: String, enum: ['expense', 'income'], default: 'expense' },
   date: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 }, { _id: false });
