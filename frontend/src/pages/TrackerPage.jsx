@@ -339,6 +339,36 @@ export default function TrackerPage() {
   const remainingBalance = effectiveBudget - totalSpent;
   const spentPercentage = effectiveBudget > 0 ? Math.min(100, Math.round((totalSpent / effectiveBudget) * 100)) : 0;
 
+  // ── Previous week's total spend ─────────────────────
+  // "Previous week" = Mon–Sun of the week that just ended before the current one
+  function getPrevWeekRange() {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun,1=Mon,...,6=Sat
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    // Start of current week (Monday)
+    const currentMon = new Date(now);
+    currentMon.setDate(now.getDate() + diffToMonday);
+    currentMon.setHours(0, 0, 0, 0);
+    // Previous Monday = 7 days before
+    const prevMon = new Date(currentMon);
+    prevMon.setDate(currentMon.getDate() - 7);
+    // Previous Sunday = 1 day before current Monday
+    const prevSun = new Date(currentMon);
+    prevSun.setDate(currentMon.getDate() - 1);
+    prevSun.setHours(23, 59, 59, 999);
+    return { prevMon, prevSun };
+  }
+  const { prevMon, prevSun } = getPrevWeekRange();
+  const prevWeekSpent = expenses
+    .filter(exp => {
+      if (exp.type === 'income') return false;
+      const d = new Date(exp.date || exp.createdAt);
+      return d >= prevMon && d <= prevSun;
+    })
+    .reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  const prevWeekLabel = `${prevMon.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – ${prevSun.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+
+
   // ── Habit Progress ───────────────────────────────────
   const days = getWeekDates(weekOffset);
   const weekLabel = getWeekLabel(weekOffset);
@@ -1068,6 +1098,20 @@ export default function TrackerPage() {
                         <span className="text-xl font-extrabold">₹{remainingBalance.toLocaleString('en-IN')}</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Previous Week Spent Banner */}
+                  <div className="flex items-center justify-between bg-[#fdf4ff] border border-[#e9d5ff] rounded-xl px-4 py-2.5 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">📅</span>
+                      <div>
+                        <p className="text-[11px] font-bold text-[#7c3aed] uppercase tracking-wide">Last Week Spent</p>
+                        <p className="text-[10px] text-[#a78bfa] font-medium">{prevWeekLabel}</p>
+                      </div>
+                    </div>
+                    <span className="text-lg font-extrabold text-[#7c3aed]">
+                      ₹{prevWeekSpent.toLocaleString('en-IN')}
+                    </span>
                   </div>
 
                   {/* Progress Bar */}
