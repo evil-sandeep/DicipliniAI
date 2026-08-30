@@ -154,15 +154,15 @@ export default function TrackerPage() {
     setFlipDirection(direction);
     setIsFlipping(true);
 
-    // Switch tab contents at 300ms (midpoint of animation when page is perpendicular)
+    // Switch tab contents at 750ms (midpoint of animation when page is perpendicular)
     setTimeout(() => {
       setActiveTab(tab);
-    }, 300);
+    }, 750);
 
-    // End flipping state at 600ms
+    // End flipping state at 1500ms
     setTimeout(() => {
       setIsFlipping(false);
-    }, 600);
+    }, 1500);
   };
 
   const [todos, setTodos] = useState([

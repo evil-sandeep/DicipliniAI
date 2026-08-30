@@ -464,14 +464,14 @@ body {
 }
 
 .notebook-page-flip-next {
-  animation: pageFlipNext 0.6s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  animation: pageFlipNext 1.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
   transform-origin: left center;
   backface-visibility: hidden;
   z-index: 20;
 }
 
 .notebook-page-flip-prev {
-  animation: pageFlipPrev 0.6s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  animation: pageFlipPrev 1.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
   transform-origin: left center;
   backface-visibility: hidden;
   z-index: 20;
@@ -538,11 +538,11 @@ body {
 }
 
 .notebook-page-flip-next .paper-shadow-overlay {
-  animation: shadowSweep 0.6s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  animation: shadowSweep 1.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
 }
 
 .notebook-page-flip-prev .paper-shadow-overlay {
-  animation: shadowSweep 0.6s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
+  animation: shadowSweep 1.5s cubic-bezier(0.645, 0.045, 0.355, 1) forwards;
 }
 
 @keyframes shadowSweep {
