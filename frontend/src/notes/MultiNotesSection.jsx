@@ -193,11 +193,11 @@ export default function MultiNotesSection() {
       </div>
 
       {/* ── Right Panel: Note Editor ─────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-white">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#fffdf9]">
         {selectedNote ? (
           <>
             {/* Editor header — NoteTitleEditor from NoteTitle.jsx + NoteDeleteEditorButton from NoteDelete.jsx */}
-            <div className="px-6 pt-5 pb-3 border-b border-[#e2e8f0] flex items-center gap-3">
+            <div className="px-6 pt-5 pb-3 border-b border-[#e2e8f0] bg-transparent flex items-center gap-3">
               <FiFileText className="text-[#8b5cf6] shrink-0" size={16} />
               <NoteTitleEditor
                 title={selectedNote.title}
@@ -216,7 +216,7 @@ export default function MultiNotesSection() {
               value={selectedNote.content}
               onChange={handleContentChange}
               placeholder="Start writing your note here…"
-              className="flex-1 w-full px-6 py-4 text-sm font-mono leading-relaxed text-[#172554] bg-white outline-none resize-none placeholder-[#c4c4c4]"
+              className="flex-1 w-full notebook-lined-paper text-[#172554] outline-none resize-none placeholder-[#c4c4c4]"
             />
           </>
         ) : (

@@ -122,6 +122,9 @@ const EXPENSE_CATEGORIES = {
   Others: { bg: '#eef2ff', text: '#4f46e5', border: '#c7d2fe', emoji: '📦' },
 };
 
+const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'MONTHLY EXP', 'STATS', 'GOALS', 'NOTES'];
+const TAB_COLORS = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
+
 export default function TrackerPage() {
   const navigate = useNavigate();
   const [columns, setColumns] = useState(INITIAL_COLUMNS);
@@ -138,6 +141,30 @@ export default function TrackerPage() {
 
   // ── Notebook Tab & To-Do State ───────────────────────
   const [activeTab, setActiveTab] = useState('THIS WEEK');
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [flipDirection, setFlipDirection] = useState('next');
+
+  const handleTabClick = (tab) => {
+    if (tab === activeTab || isFlipping) return;
+
+    const fromIdx = NOTEBOOK_TABS.indexOf(activeTab);
+    const toIdx = NOTEBOOK_TABS.indexOf(tab);
+    const direction = toIdx > fromIdx ? 'next' : 'prev';
+
+    setFlipDirection(direction);
+    setIsFlipping(true);
+
+    // Switch tab contents at 300ms (midpoint of animation when page is perpendicular)
+    setTimeout(() => {
+      setActiveTab(tab);
+    }, 300);
+
+    // End flipping state at 600ms
+    setTimeout(() => {
+      setIsFlipping(false);
+    }, 600);
+  };
+
   const [todos, setTodos] = useState([
     { id: '1', text: 'Review daily study goals', completed: false, category: 'Study', createdAt: new Date().toISOString() },
     { id: '2', text: 'Drink 2L water & 30 min walk', completed: true, category: 'Health', createdAt: new Date().toISOString() },
@@ -478,9 +505,6 @@ export default function TrackerPage() {
     }
   }, [aiMessages, showAiModal, aiLoading]);
 
-  const NOTEBOOK_TABS = ['THIS WEEK', 'TO-DO LIST', 'MONTHLY EXP', 'STATS', 'GOALS', 'NOTES'];
-  const TAB_COLORS = ['#6366f1', '#ec4899', '#10b981', '#22c55e', '#f59e0b', '#8b5cf6'];
-
   const filteredTodos = todos.filter(t => {
     if (todoFilter === 'active') return !t.completed;
     if (todoFilter === 'completed') return t.completed;
@@ -745,8 +769,23 @@ export default function TrackerPage() {
           ))}
         </div>
 
-        {/* Notebook Page */}
-        <div className="flex-1 bg-[#fffcf5] rounded-l-xl flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden border border-[#cbd5e1] border-r-0">
+        {/* Notebook Page Wrapper for 3D Perspective */}
+        <div className="flex-1 flex relative notebook-perspective">
+          {/* Flat Background Page (Under Page) visible during flip */}
+          {isFlipping && (
+            <div className="absolute inset-0 bg-[#fffcf5] rounded-l-xl flex flex-col border border-[#cbd5e1] border-r-0 shadow-[0_10px_30px_rgba(0,0,0,0.1)] pointer-events-none opacity-90">
+              <div className="w-full h-full bg-[#fffdf9] opacity-40 rounded-l-xl relative">
+                <div className="absolute left-[55px] top-0 bottom-0 w-[5px] border-l-2 border-r-2 border-red-200/50" />
+              </div>
+            </div>
+          )}
+
+          {/* Notebook Page */}
+          <div className={`flex-1 bg-[#fffcf5] rounded-l-xl flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden border border-[#cbd5e1] border-r-0 relative z-10 ${
+            isFlipping ? (flipDirection === 'next' ? 'notebook-page-flip-next' : 'notebook-page-flip-prev') : ''
+          }`}>
+            {/* Paper Shadow/Shine sweep overlay */}
+            {isFlipping && <div className="paper-shadow-overlay" />}
 
           {/* ── Header ─────────────────────────────────── */}
           <div className="px-6 py-3 shrink-0 flex justify-between items-center border-b border-[#cbd5e1]">
@@ -1494,6 +1533,7 @@ export default function TrackerPage() {
             </div>
           </div>
         </div>
+      </div>
 
         {/* ── Notebook Tabs (right side) ──────────────── */}
         <div className="flex flex-col justify-center gap-1 shrink-0">
@@ -1502,7 +1542,7 @@ export default function TrackerPage() {
             return (
               <div key={tab} className="relative flex items-center justify-center">
                 <button
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => handleTabClick(tab)}
                   className={`text-[10px] font-extrabold tracking-widest text-white px-2 py-3 rounded-r-xl select-none shadow-md transition-all cursor-pointer border-r-2 border-y border-white/20 ${isActive ? 'scale-105 shadow-xl opacity-100 ring-2 ring-white/50' : 'opacity-75 hover:opacity-100 hover:scale-105'}`}
                   style={{
                     background: TAB_COLORS[i],
