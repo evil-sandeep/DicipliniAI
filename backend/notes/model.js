@@ -9,6 +9,7 @@ const singleNoteSchema = new mongoose.Schema(
   {
     title: { type: String, default: 'Untitled Note' },
     content: { type: String, default: '' },
+    lastEditedDate: { type: String, default: '' }, // YYYY-MM-DD of last edit, for diary date stamps
   },
   { timestamps: true }
 );

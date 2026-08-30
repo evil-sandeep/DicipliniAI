@@ -53,11 +53,12 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, content } = req.body;
+    const { title, content, lastEditedDate } = req.body;
 
     const updateFields = {};
     if (title !== undefined) updateFields['notes.$.title'] = title;
     if (content !== undefined) updateFields['notes.$.content'] = content;
+    if (lastEditedDate !== undefined) updateFields['notes.$.lastEditedDate'] = lastEditedDate;
 
     await Note.findOneAndUpdate(
       { user: req.user.userId, 'notes._id': id },

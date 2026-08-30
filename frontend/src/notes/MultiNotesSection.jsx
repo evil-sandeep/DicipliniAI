@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { FiFileText, FiLoader, FiPlus } from 'react-icons/fi';
+import { FiFileText, FiLoader, FiPlus, FiClock } from 'react-icons/fi';
 import { fetchAllNotes, createNote, updateNote, deleteNote } from './api';
 import { NewNotePrompt, NoteTitleEditor, NewNoteButton } from './NoteTitle';
 import { NoteDeleteButton, NoteDeleteEditorButton } from './NoteDelete';
@@ -61,6 +61,29 @@ export default function MultiNotesSection() {
     scheduleSave(selectedId, { content: value });
   };
 
+  // ── Insert diary date stamp on focus (new day) ───────
+  const handleTextareaFocus = () => {
+    const today = getTodayStr();
+    const note = notes.find((n) => n._id === selectedId);
+    if (!note || note.lastEditedDate === today) return;
+
+    // Build the date stamp line
+    const stamp = `\n\n━━━  ${formatDiaryDate(today)}  ━━━\n`;
+    const newContent = (note.content || '') + stamp;
+
+    // Update locally
+    setNotes((prev) =>
+      prev.map((n) =>
+        n._id === selectedId
+          ? { ...n, content: newContent, lastEditedDate: today }
+          : n
+      )
+    );
+
+    // Save to backend
+    scheduleSave(selectedId, { content: newContent, lastEditedDate: today });
+  };
+
   // ── Handle title change (from NoteTitleEditor) ────────
   const handleTitleChange = (newTitle) => {
     setNotes((prev) =>
@@ -96,6 +119,21 @@ export default function MultiNotesSection() {
     } catch (err) {
       console.error('Failed to delete note:', err);
     }
+  };
+
+  // ── Diary date helpers ───────────────────────────────
+  /** Returns today as 'YYYY-MM-DD' */
+  const getTodayStr = () => new Date().toISOString().slice(0, 10);
+
+  /** Formats 'YYYY-MM-DD' → '━━━  30 Aug 2026  ━━━' */
+  const formatDiaryDate = (dateStr) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   };
 
   // ── Format date for sidebar ──────────────────────────
@@ -215,6 +253,7 @@ export default function MultiNotesSection() {
             <textarea
               value={selectedNote.content}
               onChange={handleContentChange}
+              onFocus={handleTextareaFocus}
               placeholder="Start writing your note here…"
               className="flex-1 w-full notebook-lined-paper text-[#172554] outline-none resize-none placeholder-[#c4c4c4]"
             />
