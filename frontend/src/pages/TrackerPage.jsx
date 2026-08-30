@@ -523,355 +523,12 @@ export default function TrackerPage() {
     );
   }
 
-  return (
-    <div
-      className="w-full h-screen flex items-center justify-center overflow-hidden"
-      style={{ background: 'linear-gradient(135deg,#c4a882 0%,#b8956a 100%)' }}
-    >
-      {/* ── New List Modal ─────────────────────────────── */}
-      {showInput && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={closeModal}>
-          <div
-            className="bg-[#fffcf5] rounded-2xl p-6 w-80 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
-            onClick={e => e.stopPropagation()}
-          >
-            <button onClick={closeModal} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
-              <FiX size={18} />
-            </button>
-            <h3 className="text-base font-bold text-[#172554] mb-1">Add New Habit</h3>
-            <p className="text-xs text-[#7c8499] mb-4">Enter habit title (e.g. Gym, Reading, Code)</p>
-
-            <input
-              autoFocus
-              type="text"
-              placeholder="Habit name…"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={handleKey}
-              className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] mb-4 font-semibold text-[#172554]"
-            />
-
-            <div className="flex justify-end gap-2">
-              <button onClick={closeModal} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f3f0ff]">
-                Cancel
-              </button>
-              <button
-                onClick={addList}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#6366f1] hover:bg-[#4f46e5] shadow-sm transition-all"
-              >
-                Add Habit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Budget Modal ───────────────────────────────── */}
-      {showBudgetModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowBudgetModal(false)}>
-          <div
-            className="bg-[#fffcf5] rounded-2xl p-6 w-84 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
-            onClick={e => e.stopPropagation()}
-          >
-            <button onClick={() => setShowBudgetModal(false)} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
-              <FiX size={18} />
-            </button>
-            <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
-            <p className="text-xs text-[#7c8499] mb-4">Enter your total budget for this month (e.g. 25000)</p>
-
-            <form onSubmit={handleSaveBudget}>
-              <div className="relative mb-4">
-                <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
-                <input
-                  autoFocus
-                  type="number"
-                  placeholder="25000"
-                  value={budgetInput}
-                  onChange={e => setBudgetInput(e.target.value)}
-                  className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#10b981] font-semibold text-[#172554]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all"
-                >
-                  Save Budget
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── AI Analysis & Chat Modal ────────────────────── */}
-      {showAiModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowAiModal(false)}>
-          <div
-            className="bg-[#fffcf5] rounded-3xl w-full max-w-xl h-[85vh] max-h-[680px] shadow-2xl border border-[#ede8db] flex flex-col overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center shadow-inner text-white font-bold text-base">
-                  ✨
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold tracking-wide flex items-center gap-1.5">
-                    DiscipliniAI Analyst & Coach
-                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-indigo-500/30 text-indigo-300 rounded-full border border-indigo-400/20">
-                      Live Data
-                    </span>
-                  </h3>
-                  <p className="text-[11px] text-slate-300">Habits, tasks, and monthly budget insights</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setAiMessages([
-                    { sender: 'ai', text: "👋 Chat reset! Ask me anything about your current habits, to-do lists, or spending." }
-                  ])}
-                  title="Clear Chat"
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs"
-                >
-                  <FiRefreshCw size={14} />
-                </button>
-                <button
-                  onClick={() => setShowAiModal(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <FiX size={18} />
-                </button>
-              </div>
-            </div>
-
-            {/* Suggested Quick Prompts */}
-            <div className="px-4 py-2.5 bg-[#f8f5ee] border-b border-[#e2dcd2] flex items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
-              <span className="text-[10px] font-bold text-[#64748b] shrink-0 uppercase tracking-wider">Quick Prompts:</span>
-              {[
-                { label: '👨‍💻 About Founder', prompt: 'Tell me about Mr. Sandeep, the creator of DiscipliniOS, the vision behind this app, and where I can find his portfolio.' },
-                { label: '📊 Habit Consistency', prompt: 'Analyze my current habit consistency and tell me where I should improve.' },
-                { label: '💰 Budget & Expense Analysis', prompt: 'Analyze my monthly expenses and budget. How much have I spent and what are my top categories?' },
-                { label: '📋 Pending Tasks Review', prompt: 'Review my to-do tasks and recommend which urgent tasks I should tackle next.' },
-                { label: '💡 Discipline Tips', prompt: 'Give me 3 personalized tips to stay disciplined this week based on my tracker progress.' }
-              ].map((p, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSendAiMessage(p.prompt)}
-                  disabled={aiLoading}
-                  className="text-[11px] font-semibold px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-full shadow-xs shrink-0 transition-all hover:scale-102 cursor-pointer disabled:opacity-50"
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Chat Messages List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fffcf5]">
-              {aiMessages.map((msg, i) => {
-                // Format links to make them clickable
-                const urlRegex = /(https?:\/\/[^\s]+)/g;
-                const formattedContent = typeof msg.text === 'string' ? msg.text.split(urlRegex).map((part, pIdx) => {
-                  if (part.match(urlRegex)) {
-                    return (
-                      <a
-                        key={pIdx}
-                        href={part}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline font-bold text-[#4f46e5] hover:text-[#3730a3] bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1 transition-all mx-0.5"
-                      >
-                        {part} ↗
-                      </a>
-                    );
-                  }
-                  return part;
-                }) : msg.text;
-
-                return (
-                  <div
-                    key={i}
-                    className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {msg.sender === 'ai' && (
-                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold mt-0.5">
-                        ✨
-                      </div>
-                    )}
-
-                    <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${msg.sender === 'user'
-                          ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
-                          : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
-                        }`}
-                    >
-                      {formattedContent}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {aiLoading && (
-                <div className="flex gap-2.5 justify-start items-center">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold animate-pulse">
-                    ✨
-                  </div>
-                  <div className="bg-white border border-[#e2dcd2] text-[#6366f1] rounded-2xl rounded-bl-xs px-4 py-2.5 text-xs flex items-center gap-2 shadow-xs">
-                    <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-ping" />
-                    <span className="font-semibold">Analyzing your discipline data…</span>
-                  </div>
-                </div>
-              )}
-
-              <div ref={aiChatEndRef} />
-            </div>
-
-            {/* Chat Input Box */}
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSendAiMessage(); }}
-              className="p-3 bg-[#fdfbf7] border-t border-[#e2dcd2] flex items-center gap-2 shrink-0"
-            >
-              <input
-                type="text"
-                placeholder="Ask AI about habits, tasks, expenses, or advice..."
-                value={aiInput}
-                onChange={e => setAiInput(e.target.value)}
-                disabled={aiLoading}
-                className="flex-1 px-4 py-2.5 bg-white border border-[#cbd5e1] rounded-2xl text-xs font-medium text-[#172554] outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/10 shadow-inner"
-              />
-
-              <button
-                type="submit"
-                disabled={!aiInput.trim() || aiLoading}
-                className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              >
-                <FiSend size={13} />
-                <span>Send</span>
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ── Outer Layout ──────────────────────────────── */}
-      <div className="w-[98vw] h-[95vh] flex">
-
-        {/* Spiral Spine */}
-        <div className="w-10 bg-[#3a3530] rounded-l-xl flex flex-col justify-around items-center py-4 z-10 shadow-lg border-r border-[#2d2925] shrink-0">
-          {Array.from({ length: 14 }).map((_, i) => (
-            <div key={i} className="w-7 h-3.5 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-400 rounded-full shadow-inner border border-gray-500 transform -rotate-12" />
-          ))}
-        </div>
-
-        {/* Notebook Page Wrapper for 3D Perspective */}
-        <div className="flex-1 flex relative notebook-perspective">
-          {/* Flat Background Page (Under Page) visible during flip */}
-          {isFlipping && (
-            <div className="absolute inset-0 bg-[#fffcf5] rounded-l-xl flex flex-col border border-[#cbd5e1] border-r-0 shadow-[0_10px_30px_rgba(0,0,0,0.1)] pointer-events-none opacity-90">
-              <div className="w-full h-full bg-[#fffdf9] opacity-40 rounded-l-xl relative">
-                <div className="absolute left-[55px] top-0 bottom-0 w-[5px] border-l-2 border-r-2 border-red-200/50" />
-              </div>
-            </div>
-          )}
-
-          {/* Notebook Page */}
-          <div className={`flex-1 bg-[#fffcf5] rounded-l-xl flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden border border-[#cbd5e1] border-r-0 relative z-10 ${
-            isFlipping ? (flipDirection === 'next' ? 'notebook-page-flip-next' : 'notebook-page-flip-prev') : ''
-          }`}>
-            {/* Paper Shadow/Shine sweep overlay */}
-            {isFlipping && <div className="paper-shadow-overlay" />}
-
-          {/* ── Header ─────────────────────────────────── */}
-          <div className="px-6 py-3 shrink-0 flex justify-between items-center border-b border-[#cbd5e1]">
-            <div className="flex items-center gap-3">
-              <img
-                src={user?.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.email || 'User')}`}
-                alt="Profile"
-                className="w-9 h-9 rounded-full object-cover border border-[#cbd5e1] shadow-sm"
-              />
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#172554] leading-tight">{user?.name || user?.email?.split('@')[0]}</span>
-                {saving ? (
-                  <span className="text-[10px] text-[#6366f1] font-semibold animate-pulse">saving…</span>
-                ) : (
-                  <span className="text-[10px] text-[#7c8499] font-medium">online</span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              {activeTab === 'THIS WEEK' && (
-                <div className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] rounded-full px-3 py-1.5 shadow-sm text-sm text-[#172554] font-medium">
-                  <FiCalendar size={13} className="text-[#6366f1]" />
-                  <span className="text-xs">{weekLabel}</span>
-                  <button onClick={() => setWeekOffset(w => w - 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors ml-1">
-                    <FiChevronLeft size={12} />
-                  </button>
-                  <button onClick={() => setWeekOffset(w => w + 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors">
-                    <FiChevronRight size={12} />
-                  </button>
-                </div>
-              )}
-
-              {activeTab === 'TO-DO LIST' && (
-                <div className="flex items-center gap-2 bg-[#fdf2f8] border border-[#fbcfe8] rounded-full px-3 py-1 text-xs font-bold text-[#ec4899]">
-                  <FiCheckSquare size={13} />
-                  <span>{completedTodosCount} of {todos.length} Done</span>
-                </div>
-              )}
-
-              {activeTab === 'MONTHLY EXP' && (
-                <div className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1 text-xs font-bold text-[#16a34a] shadow-sm">
-                  <FiCalendar size={12} />
-                  <span>{selectedMonthInfo.shortLabel}</span>
-                  <button
-                    onClick={() => setSelectedMonthOffset(o => o - 1)}
-                    title="Previous Month"
-                    className="hover:bg-[#dcfce7] rounded-full p-0.5 ml-1 transition-colors cursor-pointer"
-                  >
-                    <FiChevronLeft size={11} />
-                  </button>
-                  <button
-                    onClick={() => setSelectedMonthOffset(o => o + 1)}
-                    title="Next Month"
-                    className="hover:bg-[#dcfce7] rounded-full p-0.5 transition-colors cursor-pointer"
-                  >
-                    <FiChevronRight size={11} />
-                  </button>
-                </div>
-              )}
-
-              {/* ✨ AI Analysis Button */}
-              <button
-                onClick={() => setShowAiModal(true)}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:via-indigo-700 hover:to-purple-700 text-white rounded-full px-3.5 py-1 text-xs font-bold shadow-md hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                title="Open AI Data Analysis & Coach"
-              >
-                <span className="text-amber-300 text-xs">✨</span>
-                <span>AI Analysis</span>
-              </button>
-
-              <button
-                onClick={handleLogout}
-                title="Log Out"
-                className="w-8 h-8 rounded-full bg-white border border-[#cbd5e1] text-[#7c8499] hover:text-[#172554] flex items-center justify-center shadow-sm hover:scale-105 transition-all"
-              >
-                <FiLogOut size={14} strokeWidth={2.5} />
-              </button>
-            </div>
-          </div>
-
-          {/* ── Active Tab View Content ─────────────────── */}
-          <div className="flex-1 overflow-auto bg-[#fffcf5] relative">
-
-            {/* TAB 1: THIS WEEK (HABIT TRACKER MATRIX) */}
-            {activeTab === 'THIS WEEK' && (
+  
+  const renderTabContent = (tabName) => {
+    return (
+      <>
+        {/* TAB 1: THIS WEEK (HABIT TRACKER MATRIX) */}
+            {tabName === 'THIS WEEK' && (
               <table className="w-full h-full border-collapse" style={{ minWidth: 520 }}>
                 <colgroup>
                   <col style={{ width: 130, minWidth: 120 }} />
@@ -1001,7 +658,7 @@ export default function TrackerPage() {
             )}
 
             {/* TAB 2: TO-DO LIST VIEW */}
-            {activeTab === 'TO-DO LIST' && (
+            {tabName === 'TO-DO LIST' && (
               <div className="p-6 max-w-3xl mx-auto flex flex-col h-full">
                 <div className="flex items-center justify-between pb-4 border-b border-[#cbd5e1] mb-5">
                   <div>
@@ -1128,7 +785,7 @@ export default function TrackerPage() {
             )}
 
             {/* TAB 3: MONTHLY EXPENSE VIEW */}
-            {activeTab === 'MONTHLY EXP' && (
+            {tabName === 'MONTHLY EXP' && (
               <div className="p-6 w-full h-full flex flex-col md:flex-row gap-6 overflow-hidden">
 
                 {/* LEFT SIDE: Fixed Control & Budget Panel */}
@@ -1419,7 +1076,7 @@ export default function TrackerPage() {
             )}
 
             {/* TAB 4: STATS VIEW */}
-            {activeTab === 'STATS' && (
+            {tabName === 'STATS' && (
               <div className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
                 <div className="border-b border-[#cbd5e1] pb-3">
                   <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
@@ -1467,7 +1124,7 @@ export default function TrackerPage() {
             )}
 
             {/* TAB 5: GOALS VIEW */}
-            {activeTab === 'GOALS' && (
+            {tabName === 'GOALS' && (
               <div className="p-6 max-w-2xl mx-auto flex flex-col gap-6">
                 <div className="border-b border-[#cbd5e1] pb-3">
                   <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
@@ -1493,11 +1150,368 @@ export default function TrackerPage() {
             )}
 
             {/* TAB 6: NOTES VIEW */}
-            {activeTab === 'NOTES' && (
+            {tabName === 'NOTES' && (
               <NotesSection />
             )}
+      </>
+    );
+  };
 
+  return (
+    <div
+      className="w-full h-screen flex items-center justify-center overflow-hidden"
+      style={{ background: 'linear-gradient(135deg,#c4a882 0%,#b8956a 100%)' }}
+    >
+      {/* ── New List Modal ─────────────────────────────── */}
+      {showInput && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={closeModal}>
+          <div
+            className="bg-[#fffcf5] rounded-2xl p-6 w-80 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={closeModal} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
+              <FiX size={18} />
+            </button>
+            <h3 className="text-base font-bold text-[#172554] mb-1">Add New Habit</h3>
+            <p className="text-xs text-[#7c8499] mb-4">Enter habit title (e.g. Gym, Reading, Code)</p>
+
+            <input
+              autoFocus
+              type="text"
+              placeholder="Habit name…"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onKeyDown={handleKey}
+              className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] mb-4 font-semibold text-[#172554]"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button onClick={closeModal} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f3f0ff]">
+                Cancel
+              </button>
+              <button
+                onClick={addList}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#6366f1] hover:bg-[#4f46e5] shadow-sm transition-all"
+              >
+                Add Habit
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Budget Modal ───────────────────────────────── */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setShowBudgetModal(false)}>
+          <div
+            className="bg-[#fffcf5] rounded-2xl p-6 w-84 shadow-2xl border border-[#ede8db] relative animate-in fade-in zoom-in-95 duration-150"
+            onClick={e => e.stopPropagation()}
+          >
+            <button onClick={() => setShowBudgetModal(false)} className="absolute top-4 right-4 text-[#7c8499] hover:text-[#172554]">
+              <FiX size={18} />
+            </button>
+            <h3 className="text-base font-bold text-[#172554] mb-1">Set Monthly Budget</h3>
+            <p className="text-xs text-[#7c8499] mb-4">Enter your total budget for this month (e.g. 25000)</p>
+
+            <form onSubmit={handleSaveBudget}>
+              <div className="relative mb-4">
+                <span className="absolute left-3 top-2.5 text-sm font-bold text-[#64748b]">₹</span>
+                <input
+                  autoFocus
+                  type="number"
+                  placeholder="25000"
+                  value={budgetInput}
+                  onChange={e => setBudgetInput(e.target.value)}
+                  className="w-full pl-7 pr-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#10b981] font-semibold text-[#172554]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowBudgetModal(false)} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f1f5f9]">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-[#10b981] hover:bg-[#059669] shadow-sm transition-all"
+                >
+                  Save Budget
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── AI Analysis & Chat Modal ────────────────────── */}
+      {showAiModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowAiModal(false)}>
+          <div
+            className="bg-[#fffcf5] rounded-3xl w-full max-w-xl h-[85vh] max-h-[680px] shadow-2xl border border-[#ede8db] flex flex-col overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-3.5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0 shadow-md">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center shadow-inner text-white font-bold text-base">
+                  ✨
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold tracking-wide flex items-center gap-1.5">
+                    DiscipliniAI Analyst & Coach
+                    <span className="text-[10px] font-semibold px-2 py-0.5 bg-indigo-500/30 text-indigo-300 rounded-full border border-indigo-400/20">
+                      Live Data
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-300">Habits, tasks, and monthly budget insights</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAiMessages([
+                    { sender: 'ai', text: "👋 Chat reset! Ask me anything about your current habits, to-do lists, or spending." }
+                  ])}
+                  title="Clear Chat"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all text-xs"
+                >
+                  <FiRefreshCw size={14} />
+                </button>
+                <button
+                  onClick={() => setShowAiModal(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Suggested Quick Prompts */}
+            <div className="px-4 py-2.5 bg-[#f8f5ee] border-b border-[#e2dcd2] flex items-center gap-2 overflow-x-auto shrink-0 scrollbar-none">
+              <span className="text-[10px] font-bold text-[#64748b] shrink-0 uppercase tracking-wider">Quick Prompts:</span>
+              {[
+                { label: '👨‍💻 About Founder', prompt: 'Tell me about Mr. Sandeep, the creator of DiscipliniOS, the vision behind this app, and where I can find his portfolio.' },
+                { label: '📊 Habit Consistency', prompt: 'Analyze my current habit consistency and tell me where I should improve.' },
+                { label: '💰 Budget & Expense Analysis', prompt: 'Analyze my monthly expenses and budget. How much have I spent and what are my top categories?' },
+                { label: '📋 Pending Tasks Review', prompt: 'Review my to-do tasks and recommend which urgent tasks I should tackle next.' },
+                { label: '💡 Discipline Tips', prompt: 'Give me 3 personalized tips to stay disciplined this week based on my tracker progress.' }
+              ].map((p, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendAiMessage(p.prompt)}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold px-2.5 py-1 bg-white border border-[#cbd5e1] hover:border-[#6366f1] hover:text-[#6366f1] text-[#334155] rounded-full shadow-xs shrink-0 transition-all hover:scale-102 cursor-pointer disabled:opacity-50"
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chat Messages List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fffcf5]">
+              {aiMessages.map((msg, i) => {
+                // Format links to make them clickable
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const formattedContent = typeof msg.text === 'string' ? msg.text.split(urlRegex).map((part, pIdx) => {
+                  if (part.match(urlRegex)) {
+                    return (
+                      <a
+                        key={pIdx}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline font-bold text-[#4f46e5] hover:text-[#3730a3] bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 inline-flex items-center gap-1 transition-all mx-0.5"
+                      >
+                        {part} ↗
+                      </a>
+                    );
+                  }
+                  return part;
+                }) : msg.text;
+
+                return (
+                  <div
+                    key={i}
+                    className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    {msg.sender === 'ai' && (
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold mt-0.5">
+                        ✨
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs leading-relaxed shadow-xs whitespace-pre-wrap ${msg.sender === 'user'
+                          ? 'bg-[#6366f1] text-white rounded-br-xs font-medium'
+                          : 'bg-white border border-[#e2dcd2] text-[#1e293b] rounded-bl-xs'
+                        }`}
+                    >
+                      {formattedContent}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {aiLoading && (
+                <div className="flex gap-2.5 justify-start items-center">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 text-xs shadow-xs font-bold animate-pulse">
+                    ✨
+                  </div>
+                  <div className="bg-white border border-[#e2dcd2] text-[#6366f1] rounded-2xl rounded-bl-xs px-4 py-2.5 text-xs flex items-center gap-2 shadow-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#6366f1] animate-ping" />
+                    <span className="font-semibold">Analyzing your discipline data…</span>
+                  </div>
+                </div>
+              )}
+
+              <div ref={aiChatEndRef} />
+            </div>
+
+            {/* Chat Input Box */}
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSendAiMessage(); }}
+              className="p-3 bg-[#fdfbf7] border-t border-[#e2dcd2] flex items-center gap-2 shrink-0"
+            >
+              <input
+                type="text"
+                placeholder="Ask AI about habits, tasks, expenses, or advice..."
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                disabled={aiLoading}
+                className="flex-1 px-4 py-2.5 bg-white border border-[#cbd5e1] rounded-2xl text-xs font-medium text-[#172554] outline-none focus:border-[#6366f1] focus:ring-2 focus:ring-[#6366f1]/10 shadow-inner"
+              />
+
+              <button
+                type="submit"
+                disabled={!aiInput.trim() || aiLoading}
+                className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 text-white rounded-2xl text-xs font-bold flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <FiSend size={13} />
+                <span>Send</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Outer Layout ──────────────────────────────── */}
+      <div className="w-[98vw] h-[95vh] flex">
+
+        {/* Spiral Spine */}
+        <div className="w-10 bg-[#3a3530] rounded-l-xl flex flex-col justify-around items-center py-4 z-10 shadow-lg border-r border-[#2d2925] shrink-0">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className="w-7 h-3.5 bg-gradient-to-r from-gray-300 via-gray-100 to-gray-400 rounded-full shadow-inner border border-gray-500 transform -rotate-12" />
+          ))}
+        </div>
+
+        
+        {/* Notebook Page */}
+        <div className="flex-1 bg-[#fffcf5] rounded-l-xl flex flex-col shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden border border-[#cbd5e1] border-r-0">
+
+            {/* Paper Shadow/Shine sweep overlay */}
+            {isFlipping && <div className="paper-shadow-overlay" />}
+
+          {/* ── Header ─────────────────────────────────── */}
+          <div className="px-6 py-3 shrink-0 flex justify-between items-center border-b border-[#cbd5e1]">
+            <div className="flex items-center gap-3">
+              <img
+                src={user?.picture || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.email || 'User')}`}
+                alt="Profile"
+                className="w-9 h-9 rounded-full object-cover border border-[#cbd5e1] shadow-sm"
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-[#172554] leading-tight">{user?.name || user?.email?.split('@')[0]}</span>
+                {saving ? (
+                  <span className="text-[10px] text-[#6366f1] font-semibold animate-pulse">saving…</span>
+                ) : (
+                  <span className="text-[10px] text-[#7c8499] font-medium">online</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              {activeTab === 'THIS WEEK' && (
+                <div className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] rounded-full px-3 py-1.5 shadow-sm text-sm text-[#172554] font-medium">
+                  <FiCalendar size={13} className="text-[#6366f1]" />
+                  <span className="text-xs">{weekLabel}</span>
+                  <button onClick={() => setWeekOffset(w => w - 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors ml-1">
+                    <FiChevronLeft size={12} />
+                  </button>
+                  <button onClick={() => setWeekOffset(w => w + 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors">
+                    <FiChevronRight size={12} />
+                  </button>
+                </div>
+              )}
+
+              {activeTab === 'TO-DO LIST' && (
+                <div className="flex items-center gap-2 bg-[#fdf2f8] border border-[#fbcfe8] rounded-full px-3 py-1 text-xs font-bold text-[#ec4899]">
+                  <FiCheckSquare size={13} />
+                  <span>{completedTodosCount} of {todos.length} Done</span>
+                </div>
+              )}
+
+              {activeTab === 'MONTHLY EXP' && (
+                <div className="flex items-center gap-1.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-full px-3 py-1 text-xs font-bold text-[#16a34a] shadow-sm">
+                  <FiCalendar size={12} />
+                  <span>{selectedMonthInfo.shortLabel}</span>
+                  <button
+                    onClick={() => setSelectedMonthOffset(o => o - 1)}
+                    title="Previous Month"
+                    className="hover:bg-[#dcfce7] rounded-full p-0.5 ml-1 transition-colors cursor-pointer"
+                  >
+                    <FiChevronLeft size={11} />
+                  </button>
+                  <button
+                    onClick={() => setSelectedMonthOffset(o => o + 1)}
+                    title="Next Month"
+                    className="hover:bg-[#dcfce7] rounded-full p-0.5 transition-colors cursor-pointer"
+                  >
+                    <FiChevronRight size={11} />
+                  </button>
+                </div>
+              )}
+
+              {/* ✨ AI Analysis Button */}
+              <button
+                onClick={() => setShowAiModal(true)}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 hover:from-violet-700 hover:via-indigo-700 hover:to-purple-700 text-white rounded-full px-3.5 py-1 text-xs font-bold shadow-md hover:shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                title="Open AI Data Analysis & Coach"
+              >
+                <span className="text-amber-300 text-xs">✨</span>
+                <span>AI Analysis</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                title="Log Out"
+                className="w-8 h-8 rounded-full bg-white border border-[#cbd5e1] text-[#7c8499] hover:text-[#172554] flex items-center justify-center shadow-sm hover:scale-105 transition-all"
+              >
+                <FiLogOut size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+
+          {/* ── Active Tab View Content ─────────────────── */}
+          <div className="flex-1 relative notebook-perspective bg-[#fffcf5] overflow-visible">
+            {/* Flat Background Page (Under Page) visible during flip */}
+            {isFlipping && (
+              <div className="absolute inset-0 bg-[#fffcf5] flex flex-col pointer-events-none opacity-95 overflow-auto">
+                {renderTabContent(flipDirection === 'next' ? activeTab : prevTab)}
+              </div>
+            )}
+
+            {/* Notebook Page Content (Flipping Page) */}
+            <div className={`absolute inset-0 bg-[#fffcf5] flex flex-col relative z-10 ${
+              isFlipping ? 'overflow-visible' : 'overflow-auto'
+            } ${
+              isFlipping ? (flipDirection === 'next' ? 'notebook-page-flip-next' : 'notebook-page-flip-prev') : ''
+            }`}>
+              {/* Paper Shadow/Shine sweep overlay */}
+              {isFlipping && <div className="paper-shadow-overlay" />}
+
+              {renderTabContent(isFlipping ? (flipDirection === 'next' ? prevTab : activeTab) : activeTab)}
+            </div>
+          </div>
+
 
           {/* ── Bottom Bar: Progress + Motivation ──────── */}
           <div className="shrink-0 border-t border-[#ede8db] px-5 py-2 flex items-center justify-between bg-[#faf8f0] gap-4">
@@ -1533,7 +1547,6 @@ export default function TrackerPage() {
             </div>
           </div>
         </div>
-      </div>
 
         {/* ── Notebook Tabs (right side) ──────────────── */}
         <div className="flex flex-col justify-center gap-1 shrink-0">
