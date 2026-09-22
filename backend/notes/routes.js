@@ -89,6 +89,19 @@ router.put('/:id/blocks', async (req, res) => {
     const noteSubdoc = doc.notes.id(id);
     if (!noteSubdoc) return res.status(404).json({ message: 'Note not found' });
 
+    // Migrate legacy content to a block if blocks array is empty
+    if ((!noteSubdoc.blocks || noteSubdoc.blocks.length === 0) && noteSubdoc.content) {
+      const createdDate = noteSubdoc.createdAt
+        ? new Date(noteSubdoc.createdAt).toISOString().slice(0, 10)
+        : date;
+      noteSubdoc.blocks.push({
+        date: createdDate,
+        text: noteSubdoc.content,
+        createdAt: noteSubdoc.createdAt || new Date(),
+        editedAt: null
+      });
+    }
+
     const blockIdx = noteSubdoc.blocks.findIndex((b) => b.date === date);
 
     if (blockIdx >= 0) {
