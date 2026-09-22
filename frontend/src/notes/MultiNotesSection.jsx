@@ -40,6 +40,64 @@ function getNoteBlocks(note) {
   return blocks.sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+// Seamless, auto-expanding textarea component for each date entry
+function SeamlessNoteBlock({ block, isToday, value, onChange, saveStatus }) {
+  const textareaRef = useRef(null);
+
+  const adjustHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.max(isToday ? 120 : 60, textareaRef.current.scrollHeight)}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustHeight();
+  }, [value]);
+
+  return (
+    <div className="mb-8 last:mb-4 border-b border-dashed border-[#f1f5f9] pb-6 last:border-none">
+      <div className="flex items-center gap-2 mb-2 select-none">
+        <span className={`text-[11px] font-bold tracking-wide ${isToday ? 'text-[#8b5cf6]' : 'text-[#64748b]'}`}>
+          {formatDateLine(block.date)}
+        </span>
+
+        {block.editedAt && (
+          <span title="Edited" className="flex items-center gap-0.5 text-[10px] text-[#f59e0b]">
+            <FiEdit3 size={9} /> edited
+          </span>
+        )}
+
+        {saveStatus === 'saving' && <span className="text-[10px] text-[#94a3b8] italic">saving…</span>}
+        {saveStatus === 'saved' && (
+          <span className="text-[10px] text-[#22c55e] flex items-center gap-0.5">
+            <FiCheck size={10} /> saved
+          </span>
+        )}
+        {saveStatus === 'error' && (
+          <span className="text-[10px] text-[#ef4444] flex items-center gap-0.5">
+            <FiAlertCircle size={10} /> error saving
+          </span>
+        )}
+      </div>
+
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => {
+          onChange(block.date, e.target.value);
+          adjustHeight();
+        }}
+        placeholder={isToday ? "Write today's note…" : `Edit note for ${block.date}…`}
+        className={`w-full text-sm font-mono leading-relaxed bg-transparent border-none outline-none resize-none p-0 overflow-hidden transition-colors ${
+          isToday ? 'text-[#172554] placeholder-[#cbd5e1]' : 'text-[#334155] placeholder-[#d1d5db]'
+        }`}
+        style={{ minHeight: isToday ? 120 : 60 }}
+      />
+    </div>
+  );
+}
+
 export default function MultiNotesSection() {
   const [notes, setNotes] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -47,7 +105,7 @@ export default function MultiNotesSection() {
   const [showNewPrompt, setShowNewPrompt] = useState(false);
   const [creating, setCreating] = useState(false);
   const [saveStatus, setSaveStatus] = useState('idle');
-  
+
   // Stores transient input text per block key `${noteId}_${dateStr}`
   const [blockTexts, setBlockTexts] = useState({});
   const [customDate, setCustomDate] = useState('');
@@ -299,53 +357,21 @@ export default function MultiNotesSection() {
               </div>
             </div>
 
-            {/* Note Blocks List (All Editable) */}
+            {/* Note Blocks List (Seamless Page Layout with Natural Page Scroll) */}
             <div className="flex-1 overflow-y-auto px-8 py-5">
               {displayBlocks.map((block) => {
                 const isToday = block.date === today;
                 const value = getBlockTextValue(block);
 
                 return (
-                  <div key={block.date} className="mb-7 group border-b border-dashed border-[#f1f5f9] pb-5 last:border-none">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span
-                        className={`text-[11px] font-bold tracking-wide select-none ${
-                          isToday ? 'text-[#8b5cf6]' : 'text-[#64748b]'
-                        }`}
-                      >
-                        {formatDateLine(block.date)}
-                      </span>
-
-                      {block.editedAt && (
-                        <span title="Edited" className="flex items-center gap-0.5 text-[10px] text-[#f59e0b]">
-                          <FiEdit3 size={9} /> edited
-                        </span>
-                      )}
-
-                      {saveStatus === 'saving' && <span className="text-[10px] text-[#94a3b8] italic">saving…</span>}
-                      {saveStatus === 'saved' && (
-                        <span className="text-[10px] text-[#22c55e] flex items-center gap-0.5">
-                          <FiCheck size={10} /> saved
-                        </span>
-                      )}
-                      {saveStatus === 'error' && (
-                        <span className="text-[10px] text-[#ef4444] flex items-center gap-0.5">
-                          <FiAlertCircle size={10} /> error saving
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Editable Textarea for Every Date Block */}
-                    <textarea
-                      value={value}
-                      onChange={(e) => handleBlockChange(block.date, e.target.value)}
-                      placeholder={isToday ? "Write today's note…" : `Edit note for ${block.date}…`}
-                      className={`w-full text-sm font-mono leading-relaxed bg-[#f8fafc] hover:bg-white focus:bg-white p-3 rounded-xl border border-[#e2e8f0] focus:border-[#8b5cf6] outline-none resize-y transition-all ${
-                        isToday ? 'text-[#172554] shadow-sm' : 'text-[#334155]'
-                      }`}
-                      style={{ minHeight: isToday ? 150 : 100 }}
-                    />
-                  </div>
+                  <SeamlessNoteBlock
+                    key={block.date}
+                    block={block}
+                    isToday={isToday}
+                    value={value}
+                    onChange={handleBlockChange}
+                    saveStatus={saveStatus}
+                  />
                 );
               })}
             </div>
