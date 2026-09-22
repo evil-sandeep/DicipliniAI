@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiEdit2, FiTrash2, FiPlus, FiCheck } from 'react-icons/fi';
 
 export default function ThisWeekSection({
@@ -10,12 +10,14 @@ export default function ThisWeekSection({
   editName,
   setEditName,
   startRename,
-  saveRename,
-  handleRenameKey,
   deleteList,
+  reorderList,
   openModal,
-  toggleCheck
+  toggleCheck,
+  isPastWeek
 }) {
+  const [draggedColId, setDraggedColId] = useState(null);
+  const [dragOverColId, setDragOverColId] = useState(null);
   return (
     <table className="w-full h-full border-collapse" style={{ minWidth: 520 }}>
       <colgroup>
@@ -33,7 +35,37 @@ export default function ThisWeekSection({
           </th>
 
           {columns.map(col => (
-            <th key={col.id} className="px-3 py-1.5 text-center border-b border-[#cbd5e1] border-r border-[#cbd5e1] group relative">
+            <th 
+              key={col.id} 
+              draggable
+              onDragStart={(e) => {
+                setDraggedColId(col.id);
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOverColId !== col.id) setDragOverColId(col.id);
+              }}
+              onDragLeave={() => {
+                if (dragOverColId === col.id) setDragOverColId(null);
+              }}
+              onDragEnd={() => {
+                setDraggedColId(null);
+                setDragOverColId(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (draggedColId && draggedColId !== col.id) {
+                  reorderList(draggedColId, col.id);
+                }
+                setDraggedColId(null);
+                setDragOverColId(null);
+              }}
+              className={`px-3 py-1.5 text-center border-b border-[#cbd5e1] border-r border-[#cbd5e1] group relative cursor-grab active:cursor-grabbing transition-colors ${
+                dragOverColId === col.id ? 'bg-[#e0e7ff]' : ''
+              } ${draggedColId === col.id ? 'opacity-50' : ''}`}
+            >
               {editingColId === col.id ? (
                 <input autoFocus value={editName}
                   onChange={e => setEditName(e.target.value)}
@@ -50,32 +82,44 @@ export default function ThisWeekSection({
                     )}
                     <span className="text-sm font-bold text-[#172554] tracking-wide">{col.name}</span>
                   </div>
-                  <span className="text-[11px] text-[#7c8499]">{col.sub}</span>
-                  <div className="absolute inset-0 bg-[#fffcf5]/95 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded">
-                    <button onClick={e => { e.stopPropagation(); startRename(col.id, col.name); }}
-                      className="p-1.5 bg-[#eef2ff] text-[#6366f1] rounded-full hover:bg-[#6366f1] hover:text-white transition-all" title="Rename">
-                      <FiEdit2 size={11} strokeWidth={2.5} />
-                    </button>
-                    <button onClick={e => { e.stopPropagation(); deleteList(col.id); }}
-                      className="p-1.5 bg-red-50 text-red-400 rounded-full hover:bg-red-400 hover:text-white transition-all" title="Delete">
-                      <FiTrash2 size={11} strokeWidth={2.5} />
-                    </button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-[#7c8499]">{col.sub}</span>
+                    {col.burnType === 'front' && (
+                      <span className="px-1.5 py-0.5 rounded bg-red-50 text-red-600 text-[8px] font-extrabold border border-red-200">🔥 IMP</span>
+                    )}
+                    {col.burnType === 'back' && (
+                      <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-500 text-[8px] font-bold border border-blue-200">🧊 BACK</span>
+                    )}
                   </div>
+                  {!isPastWeek && (
+                    <div className="absolute inset-0 bg-[#fffcf5]/95 flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded">
+                      <button onClick={e => { e.stopPropagation(); startRename(col.id, col.name); }}
+                        className="p-1.5 bg-[#eef2ff] text-[#6366f1] rounded-full hover:bg-[#6366f1] hover:text-white transition-all" title="Rename">
+                        <FiEdit2 size={11} strokeWidth={2.5} />
+                      </button>
+                      <button onClick={e => { e.stopPropagation(); deleteList(col.id); }}
+                        className="p-1.5 bg-red-50 text-red-400 rounded-full hover:bg-red-400 hover:text-white transition-all" title="Delete">
+                        <FiTrash2 size={11} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </th>
           ))}
 
           <th className="px-2 py-1.5 text-center border-b border-[#cbd5e1]">
-            <div className="flex flex-col items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity" onClick={openModal}>
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#f3f0ff]">
-                <div className="w-3 h-3 rounded-full border border-dashed border-[#6366f1] flex items-center justify-center">
-                  <FiPlus size={8} className="text-[#6366f1]" strokeWidth={2.5} />
+            {!isPastWeek && (
+              <div className="flex flex-col items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity" onClick={openModal}>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#f3f0ff]">
+                  <div className="w-3 h-3 rounded-full border border-dashed border-[#6366f1] flex items-center justify-center">
+                    <FiPlus size={8} className="text-[#6366f1]" strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-bold text-[#6366f1] tracking-wide">NEW LIST</span>
                 </div>
-                <span className="text-[10px] font-bold text-[#6366f1] tracking-wide">NEW LIST</span>
+                <span className="text-[10px] text-[#7c8499]">Add habit</span>
               </div>
-              <span className="text-[10px] text-[#7c8499]">Add habit</span>
-            </div>
+            )}
           </th>
         </tr>
       </thead>
@@ -129,14 +173,16 @@ export default function ThisWeekSection({
               })}
 
               <td className="py-1 px-2 text-center">
-                <div className="flex items-center justify-center">
-                  <div
-                    onClick={openModal}
-                    className="w-5.5 h-5.5 rounded-full border border-dashed border-[#c4bfdd] text-[#c4bfdd] flex items-center justify-center cursor-pointer hover:border-[#6366f1] hover:text-[#6366f1] transition-all hover:scale-110"
-                  >
-                    <FiPlus size={10} strokeWidth={2} />
+                {!isPastWeek && (
+                  <div className="flex items-center justify-center">
+                    <div
+                      onClick={openModal}
+                      className="w-5.5 h-5.5 rounded-full border border-dashed border-[#c4bfdd] text-[#c4bfdd] flex items-center justify-center cursor-pointer hover:border-[#6366f1] hover:text-[#6366f1] transition-all hover:scale-110"
+                    >
+                      <FiPlus size={10} strokeWidth={2} />
+                    </div>
                   </div>
-                </div>
+                )}
               </td>
             </tr>
           );

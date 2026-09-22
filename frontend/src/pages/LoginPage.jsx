@@ -183,7 +183,7 @@ function LoginPage() {
                 theme="outline"
                 shape="pill"
                 size="large"
-                width="100%"
+                width="380"
               />
             </div>
 

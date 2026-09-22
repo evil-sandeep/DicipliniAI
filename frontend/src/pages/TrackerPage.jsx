@@ -39,9 +39,9 @@ import ThisWeekSection from '../thisweek/ThisWeekSection';
 const API = `${API_BASE_URL}/api/tracker`;
 
 const INITIAL_COLUMNS = [
-  { id: 'yt', name: 'YT', sub: 'YouTube', iconName: 'FaYoutube', Icon: FaYoutube, color: '#ef4444', bg: '#fef2f2' },
-  { id: 'dsa', name: 'DSA', sub: 'Practice', iconName: 'FiCode', Icon: FiCode, color: '#6366f1', bg: '#eef2ff' },
-  { id: 'walk', name: 'WALK', sub: '30 min', iconName: 'FaWalking', Icon: FaWalking, color: '#22c55e', bg: '#f0fdf4' },
+  { id: 'yt', name: 'YT', sub: 'YouTube', iconName: 'FaYoutube', Icon: FaYoutube, color: '#ef4444', bg: '#fef2f2', createdAt: new Date(2000, 0, 1).toISOString() },
+  { id: 'dsa', name: 'DSA', sub: 'Practice', iconName: 'FiCode', Icon: FiCode, color: '#6366f1', bg: '#eef2ff', createdAt: new Date(2000, 0, 1).toISOString() },
+  { id: 'walk', name: 'WALK', sub: '30 min', iconName: 'FaWalking', Icon: FaWalking, color: '#22c55e', bg: '#f0fdf4', createdAt: new Date(2000, 0, 1).toISOString() },
 ];
 
 const ICON_MAP = {
@@ -130,6 +130,7 @@ export default function TrackerPage() {
   const [checked, setChecked] = useState({});
   const [showInput, setShowInput] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newBurnType, setNewBurnType] = useState('front');
   const [editingColId, setEditingColId] = useState(null);
   const [editName, setEditName] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
@@ -147,6 +148,10 @@ export default function TrackerPage() {
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoCat, setNewTodoCat] = useState('Personal');
   const [todoFilter, setTodoFilter] = useState('all');
+
+  // ── Not To-Do State ───────────────────────────────────
+  const [notTodos, setNotTodos] = useState([]);
+  const [newNotTodoText, setNewNotTodoText] = useState('');
 
   // ── Monthly Expense State ────────────────────────────
   const [monthlyBudget, setMonthlyBudget] = useState(25000);
@@ -200,6 +205,9 @@ export default function TrackerPage() {
         if (data.todos && data.todos.length > 0) {
           setTodos(data.todos);
         }
+        if (data.notTodos && data.notTodos.length > 0) {
+          setNotTodos(data.notTodos);
+        }
         if (data.monthlyBudget !== undefined && data.monthlyBudget !== null) {
           setMonthlyBudget(data.monthlyBudget);
         }
@@ -212,7 +220,7 @@ export default function TrackerPage() {
   }, [navigate]);
 
   // ── Auto-save to backend ─────────────────────────────
-  const saveToBackend = useCallback((newColumns, newChecked, newTodos = todos, newBudget = monthlyBudget, newExpenses = expenses) => {
+  const saveToBackend = useCallback((newColumns, newChecked, newTodos = todos, newBudget = monthlyBudget, newExpenses = expenses, newNotTodos = notTodos) => {
     const token = getToken();
     if (!token) return;
 
@@ -231,6 +239,7 @@ export default function TrackerPage() {
             columns: serialisableCols,
             checked: newChecked,
             todos: newTodos,
+            notTodos: newNotTodos,
             monthlyBudget: newBudget,
             expenses: newExpenses
           }),
@@ -241,7 +250,7 @@ export default function TrackerPage() {
         setSaving(false);
       }
     }, 800);
-  }, [todos, monthlyBudget, expenses]);
+  }, [todos, notTodos, monthlyBudget, expenses]);
 
   // ── To-Do Handlers ────────────────────────────────────
   const handleAddTodo = (e) => {
@@ -275,7 +284,28 @@ export default function TrackerPage() {
   const handleClearCompleted = () => {
     const updatedTodos = todos.filter(t => !t.completed);
     setTodos(updatedTodos);
-    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses);
+    saveToBackend(columns, checked, updatedTodos, monthlyBudget, expenses, notTodos);
+  };
+
+  // ── Not To-Do Handlers ────────────────────────────────
+  const handleAddNotTodo = (e) => {
+    if (e) e.preventDefault();
+    if (!newNotTodoText.trim()) return;
+    const item = {
+      id: Date.now().toString(),
+      text: newNotTodoText.trim(),
+      createdAt: new Date().toISOString()
+    };
+    const updated = [item, ...notTodos];
+    setNotTodos(updated);
+    setNewNotTodoText('');
+    saveToBackend(columns, checked, todos, monthlyBudget, expenses, updated);
+  };
+
+  const handleDeleteNotTodo = (id) => {
+    const updated = notTodos.filter(n => n.id !== id);
+    setNotTodos(updated);
+    saveToBackend(columns, checked, todos, monthlyBudget, expenses, updated);
   };
 
   // ── Monthly Expense Handlers ─────────────────────────
@@ -408,12 +438,35 @@ export default function TrackerPage() {
   const prevWeekLabel = `${prevMon.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – ${prevSun.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
 
 
-  // ── Habit Progress ───────────────────────────────────
+  // ── Habit Progress & Temporal Filtering ──────────────
   const days = getWeekDates(weekOffset);
   const weekLabel = getWeekLabel(weekOffset);
-  const totalCells = days.length * columns.length;
+
+  // Calculate start and end of the currently viewed week
+  const weekStart = days[0].dateObj || new Date(days[0].iso);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  const visibleColumns = columns.filter(col => {
+    // If it lacks createdAt, assume it's always been there
+    const createdAt = col.createdAt ? new Date(col.createdAt) : new Date(2000, 0, 1);
+    
+    // It must be created before or during the currently viewed week
+    if (createdAt > weekEnd) return false;
+
+    // If it was deleted, it's only visible if the viewed week's START is BEFORE the deletion
+    if (col.deletedAt) {
+      const deletedAt = new Date(col.deletedAt);
+      if (weekStart >= deletedAt) return false;
+    }
+    
+    return true;
+  });
+
+  const totalCells = days.length * visibleColumns.length;
   const checkedCount = days.reduce((count, day) => {
-    columns.forEach(col => {
+    visibleColumns.forEach(col => {
       const key = `${day.iso}-${col.id}`;
       if (checked[key]) count++;
     });
@@ -437,7 +490,7 @@ export default function TrackerPage() {
     saveToBackend(columns, newChecked, todos, monthlyBudget, expenses);
   };
 
-  const openModal = () => { setNewName(''); setShowInput(true); };
+  const openModal = () => { setNewName(''); setNewBurnType('front'); setShowInput(true); };
   const closeModal = () => setShowInput(false);
 
   const addList = () => {
@@ -460,9 +513,11 @@ export default function TrackerPage() {
       id: `list-${Date.now()}`,
       name,
       sub: 'Habit',
+      burnType: newBurnType,
       iconName: emoji,
       color: colorScheme.color,
-      bg: colorScheme.bg
+      bg: colorScheme.bg,
+      createdAt: new Date().toISOString()
     };
 
     const newColumns = [...columns, newCol];
@@ -472,15 +527,33 @@ export default function TrackerPage() {
   };
 
   const deleteList = (colId) => {
-    const newColumns = columns.filter(c => c.id !== colId);
-    const newChecked = { ...checked };
-    Object.keys(newChecked).forEach(k => { if (k.endsWith(`-${colId}`)) delete newChecked[k]; });
+    const isPastWeek = weekOffset < 0;
+    if (isPastWeek) return; // Prevent deleting from past weeks
+
+    const newColumns = columns.map(c => 
+      c.id === colId ? { ...c, deletedAt: new Date(weekStart).toISOString() } : c
+    );
     setColumns(newColumns);
-    setChecked(newChecked);
-    saveToBackend(newColumns, newChecked, todos, monthlyBudget, expenses);
+    saveToBackend(newColumns, checked, todos, monthlyBudget, expenses);
   };
 
-  const startRename = (id, name) => { setEditingColId(id); setEditName(name); };
+  const reorderList = (draggedId, targetId) => {
+    const dragIdx = columns.findIndex(c => c.id === draggedId);
+    const dropIdx = columns.findIndex(c => c.id === targetId);
+    if (dragIdx < 0 || dropIdx < 0 || dragIdx === dropIdx) return;
+    
+    const newColumns = [...columns];
+    const [draggedItem] = newColumns.splice(dragIdx, 1);
+    newColumns.splice(dropIdx, 0, draggedItem);
+    
+    setColumns(newColumns);
+    saveToBackend(newColumns, checked, todos, monthlyBudget, expenses);
+  };
+
+  const startRename = (id, name) => { 
+    if (weekOffset < 0) return; // Disable rename for past weeks
+    setEditingColId(id); setEditName(name); 
+  };
   const cancelRename = () => { setEditingColId(null); setEditName(''); };
   const saveRename = () => {
     if (!editName.trim()) { cancelRename(); return; }
@@ -595,8 +668,33 @@ export default function TrackerPage() {
               value={newName}
               onChange={e => setNewName(e.target.value)}
               onKeyDown={handleKey}
-              className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] mb-4 font-semibold text-[#172554]"
+              className="w-full px-3 py-2 border border-[#ede8db] rounded-lg text-sm bg-white outline-none focus:border-[#6366f1] mb-3 font-semibold text-[#172554]"
             />
+
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => setNewBurnType('front')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  newBurnType === 'front'
+                    ? 'bg-red-50 border-red-200 text-red-600 shadow-sm'
+                    : 'bg-[#faf8f0] border-[#ede8db] text-[#7c8499] hover:bg-white'
+                }`}
+              >
+                🔥 Front Burn (IMP)
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewBurnType('back')}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                  newBurnType === 'back'
+                    ? 'bg-blue-50 border-blue-200 text-blue-600 shadow-sm'
+                    : 'bg-[#faf8f0] border-[#ede8db] text-[#7c8499] hover:bg-white'
+                }`}
+              >
+                🧊 Back Burn
+              </button>
+            </div>
 
             <div className="flex justify-end gap-2">
               <button onClick={closeModal} className="px-4 py-1.5 rounded-lg text-xs font-semibold text-[#7c8499] hover:bg-[#f3f0ff]">
@@ -924,12 +1022,33 @@ export default function TrackerPage() {
                 <div className="flex items-center gap-1.5 bg-white border border-[#cbd5e1] rounded-full px-3 py-1.5 shadow-sm text-sm text-[#172554] font-medium">
                   <FiCalendar size={13} className="text-[#6366f1]" />
                   <span className="text-xs">{weekLabel}</span>
-                  <button onClick={() => setWeekOffset(w => w - 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors ml-1">
-                    <FiChevronLeft size={12} />
-                  </button>
-                  <button onClick={() => setWeekOffset(w => w + 1)} className="w-5 h-5 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center transition-colors">
-                    <FiChevronRight size={12} />
-                  </button>
+                  {weekOffset > -8 && ( // 60 days approx = 8 weeks
+                    <button
+                      onClick={() => setWeekOffset(w => w - 1)}
+                      title="Previous Week"
+                      className="hover:bg-[#dcfce7] rounded-full p-0.5 transition-colors cursor-pointer"
+                    >
+                      <FiChevronLeft size={11} />
+                    </button>
+                  )}
+                  {weekOffset !== 0 && (
+                    <button
+                      onClick={() => setWeekOffset(0)}
+                      title="Go to current week"
+                      className="px-1 py-0.5 rounded text-[9px] bg-green-200 text-green-800 hover:bg-green-300 font-bold ml-0.5 cursor-pointer"
+                    >
+                      Today
+                    </button>
+                  )}
+                  {weekOffset < 0 && (
+                    <button
+                      onClick={() => setWeekOffset(w => w + 1)}
+                      title="Next Week"
+                      className="hover:bg-[#dcfce7] rounded-full p-0.5 ml-1 transition-colors cursor-pointer"
+                    >
+                      <FiChevronRight size={11} />
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -987,7 +1106,7 @@ export default function TrackerPage() {
             {/* TAB 1: THIS WEEK (HABIT TRACKER MATRIX) */}
             {activeTab === 'THIS WEEK' && (
               <ThisWeekSection
-                columns={columns}
+                columns={visibleColumns}
                 days={days}
                 checked={checked}
                 animatingKey={animatingKey}
@@ -998,139 +1117,227 @@ export default function TrackerPage() {
                 saveRename={saveRename}
                 handleRenameKey={handleRenameKey}
                 deleteList={deleteList}
+                reorderList={reorderList}
                 openModal={openModal}
                 toggleCheck={toggleCheck}
+                isPastWeek={weekOffset < 0}
               />
             )}
 
-            {/* TAB 2: TO-DO LIST VIEW */}
+            {/* TAB 2: TO-DO LIST + NOT TO-DO (Split View) */}
             {activeTab === 'TO-DO LIST' && (
-              <div className="p-6 max-w-3xl mx-auto flex flex-col h-full">
-                <div className="flex items-center justify-between pb-4 border-b border-[#cbd5e1] mb-5">
-                  <div>
-                    <h2 className="text-xl font-bold text-[#172554] flex items-center gap-2">
-                      <span>📝</span> My To-Do List
-                    </h2>
-                    <p className="text-xs text-[#64748b]">Manage daily tasks, priorities & action items</p>
-                  </div>
+              <div className="p-5 h-full flex gap-5 overflow-hidden">
 
-                  <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl border border-[#cbd5e1]">
-                    {['all', 'active', 'completed'].map(f => (
-                      <button
-                        key={f}
-                        onClick={() => setTodoFilter(f)}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${todoFilter === f ? 'bg-white text-[#6366f1] shadow-sm' : 'text-[#64748b] hover:text-[#172554]'}`}
-                      >
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <form onSubmit={handleAddTodo} className="bg-white p-3 rounded-2xl border border-[#cbd5e1] shadow-sm flex flex-col md:flex-row items-center gap-3 mb-6">
-                  <input
-                    type="text"
-                    placeholder="Add a new task..."
-                    value={newTodoText}
-                    onChange={e => setNewTodoText(e.target.value)}
-                    className="flex-1 px-4 py-2 border border-[#e2e8f0] rounded-xl text-sm outline-none focus:border-[#ec4899] font-medium text-[#172554] bg-[#fafafa]"
-                  />
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    {Object.keys(CATEGORY_STYLES).map(cat => {
-                      const style = CATEGORY_STYLES[cat];
-                      const isSelected = newTodoCat === cat;
-                      return (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => setNewTodoCat(cat)}
-                          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${isSelected ? 'shadow-sm scale-105' : 'opacity-60 hover:opacity-100'}`}
-                          style={{
-                            background: style.bg,
-                            color: style.text,
-                            borderColor: style.border
-                          }}
-                        >
-                          {style.emoji} {cat}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#ec4899] hover:bg-[#db2777] shadow-sm transition-all flex items-center gap-1 shrink-0"
-                  >
-                    <FiPlus size={14} strokeWidth={3} /> Add
-                  </button>
-                </form>
-
-                <div className="flex-1 overflow-auto pr-1 space-y-2.5">
-                  {filteredTodos.length === 0 ? (
-                    <div className="h-48 flex flex-col items-center justify-center text-center border-2 border-dashed border-[#cbd5e1] rounded-2xl p-6">
-                      <span className="text-3xl mb-2">🎉</span>
-                      <p className="text-sm font-bold text-[#172554]">No tasks found</p>
-                      <p className="text-xs text-[#64748b]">Add your first to-do item above to stay on track!</p>
+                {/* ── LEFT: TO-DO LIST ─────────────────────────── */}
+                <div className="flex-1 flex flex-col min-w-0 bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                  {/* Panel Header */}
+                  <div className="px-4 py-3 border-b border-[#e2e8f0] bg-gradient-to-r from-[#fdf2f8] to-white flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#ec4899] flex items-center justify-center text-white text-sm">✅</div>
+                      <div>
+                        <h2 className="text-sm font-extrabold text-[#172554] leading-tight">TO-DO LIST</h2>
+                        <p className="text-[10px] text-[#64748b]">Things you SHOULD do</p>
+                      </div>
                     </div>
-                  ) : (
-                    filteredTodos.map(todo => {
-                      const catStyle = CATEGORY_STYLES[todo.category] || CATEGORY_STYLES.Personal;
-                      return (
-                        <div
-                          key={todo.id}
-                          className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 shadow-sm ${todo.completed ? 'bg-[#f8fafc] border-[#e2e8f0] opacity-75' : 'bg-white border-[#cbd5e1] hover:border-[#ec4899]'}`}
+                    <div className="flex items-center gap-1 bg-[#f1f5f9] p-0.5 rounded-lg border border-[#e2e8f0]">
+                      {['all', 'active', 'done'].map(f => (
+                        <button
+                          key={f}
+                          onClick={() => setTodoFilter(f === 'done' ? 'completed' : f)}
+                          className={`px-2.5 py-1 rounded-md text-[10px] font-bold capitalize transition-all ${
+                            (f === 'done' ? todoFilter === 'completed' : todoFilter === f)
+                              ? 'bg-white text-[#ec4899] shadow-sm'
+                              : 'text-[#64748b] hover:text-[#172554]'
+                          }`}
                         >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <button
-                              onClick={() => handleToggleTodo(todo.id)}
-                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${todo.completed ? 'bg-[#ec4899] border-[#ec4899] text-white' : 'border-[#cbd5e1] hover:border-[#ec4899] bg-white'}`}
-                            >
-                              {todo.completed && <FiCheck size={14} strokeWidth={3} />}
-                            </button>
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                            <span className={`text-sm font-semibold truncate text-[#172554] ${todo.completed ? 'line-through text-[#94a3b8]' : ''}`}>
-                              {todo.text}
-                            </span>
+                  {/* Add Task Form */}
+                  <form onSubmit={handleAddTodo} className="px-3 py-2.5 border-b border-[#e2e8f0] bg-[#fafafa] flex items-center gap-2 shrink-0">
+                    <input
+                      type="text"
+                      placeholder="Add a new task..."
+                      value={newTodoText}
+                      onChange={e => setNewTodoText(e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-[#e2e8f0] rounded-xl text-xs outline-none focus:border-[#ec4899] font-medium text-[#172554] bg-white"
+                    />
+                    <select
+                      value={newTodoCat}
+                      onChange={e => setNewTodoCat(e.target.value)}
+                      className="px-2 py-1.5 border border-[#e2e8f0] rounded-xl text-xs font-bold text-[#172554] bg-white outline-none focus:border-[#ec4899] cursor-pointer"
+                    >
+                      {Object.keys(CATEGORY_STYLES).map(cat => (
+                        <option key={cat} value={cat}>{CATEGORY_STYLES[cat].emoji} {cat}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#ec4899] hover:bg-[#db2777] shadow-sm transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <FiPlus size={12} strokeWidth={3} /> Add
+                    </button>
+                  </form>
+
+                  {/* List */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {filteredTodos.length === 0 ? (
+                      <div className="h-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-[#e2e8f0] rounded-2xl p-4">
+                        <span className="text-2xl mb-1">🎉</span>
+                        <p className="text-xs font-bold text-[#172554]">No tasks yet</p>
+                        <p className="text-[10px] text-[#64748b]">Add something to get started!</p>
+                      </div>
+                    ) : (
+                      filteredTodos.map(todo => {
+                        const catStyle = CATEGORY_STYLES[todo.category] || CATEGORY_STYLES.Personal;
+                        return (
+                          <div
+                            key={todo.id}
+                            className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-2 ${
+                              todo.completed
+                                ? 'bg-[#f8fafc] border-[#e2e8f0] opacity-70'
+                                : 'bg-white border-[#e2e8f0] hover:border-[#ec4899] hover:shadow-sm'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <button
+                                onClick={() => handleToggleTodo(todo.id)}
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0 cursor-pointer ${
+                                  todo.completed
+                                    ? 'bg-[#ec4899] border-[#ec4899] text-white'
+                                    : 'border-[#cbd5e1] hover:border-[#ec4899] bg-white'
+                                }`}
+                              >
+                                {todo.completed && <FiCheck size={11} strokeWidth={3} />}
+                              </button>
+                              <span className={`text-xs font-semibold truncate ${
+                                todo.completed ? 'line-through text-[#94a3b8]' : 'text-[#172554]'
+                              }`}>
+                                {todo.text}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span
+                                className="px-1.5 py-0.5 rounded text-[9px] font-bold border"
+                                style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
+                              >
+                                {catStyle.emoji}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteTodo(todo.id)}
+                                className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded hover:bg-red-50 transition-all cursor-pointer"
+                              >
+                                <FiTrash2 size={11} />
+                              </button>
+                            </div>
                           </div>
+                        );
+                      })
+                    )}
+                  </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span
-                              className="px-2 py-0.5 rounded-md text-[10px] font-bold border"
-                              style={{ background: catStyle.bg, color: catStyle.text, borderColor: catStyle.border }}
-                            >
-                              {catStyle.emoji} {todo.category}
-                            </span>
-
-                            <button
-                              onClick={() => handleDeleteTodo(todo.id)}
-                              className="p-1.5 text-[#94a3b8] hover:text-[#ef4444] rounded-lg hover:bg-red-50 transition-all"
-                              title="Delete task"
-                            >
-                              <FiTrash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
+                  {/* Footer */}
+                  {todos.some(t => t.completed) && (
+                    <div className="px-3 py-2 border-t border-[#e2e8f0] bg-[#fafafa] flex justify-between items-center text-[10px] shrink-0">
+                      <span className="text-[#64748b] font-medium">{completedTodosCount} of {todos.length} done</span>
+                      <button onClick={handleClearCompleted} className="text-[#ec4899] font-bold hover:underline cursor-pointer">
+                        Clear Done
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                {todos.some(t => t.completed) && (
-                  <div className="pt-3 border-t border-[#cbd5e1] mt-3 flex justify-between items-center text-xs">
-                    <span className="text-[#64748b] font-medium">{completedTodosCount} completed</span>
-                    <button
-                      onClick={handleClearCompleted}
-                      className="text-[#ec4899] font-bold hover:underline"
-                    >
-                      Clear Completed
-                    </button>
+                {/* ── DIVIDER ──────────────────────────────────── */}
+                <div className="flex flex-col items-center justify-center gap-1 shrink-0">
+                  <div className="w-px flex-1 bg-gradient-to-b from-transparent via-[#cbd5e1] to-transparent" />
+                  <div className="w-8 h-8 rounded-full bg-[#f1f5f9] border border-[#e2e8f0] flex items-center justify-center text-sm shadow-sm">
+                    ⚡
                   </div>
-                )}
+                  <div className="w-px flex-1 bg-gradient-to-b from-transparent via-[#cbd5e1] to-transparent" />
+                </div>
+
+                {/* ── RIGHT: NOT TO-DO LIST ─────────────────────── */}
+                <div className="flex-1 flex flex-col min-w-0 bg-white rounded-2xl border border-[#fecaca] shadow-sm overflow-hidden">
+                  {/* Panel Header */}
+                  <div className="px-4 py-3 border-b border-[#fecaca] bg-gradient-to-r from-red-50 to-white flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#dc2626] flex items-center justify-center text-white text-sm">🚫</div>
+                      <div>
+                        <h2 className="text-sm font-extrabold text-[#7f1d1d] leading-tight">NOT TO-DO LIST</h2>
+                        <p className="text-[10px] text-[#b91c1c]">Things you must AVOID</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1 text-[10px] font-bold text-red-600">
+                      🚫 {notTodos.length} to avoid
+                    </div>
+                  </div>
+
+                  {/* Add Form */}
+                  <form onSubmit={handleAddNotTodo} className="px-3 py-2.5 border-b border-[#fecaca] bg-red-50/40 flex items-center gap-2 shrink-0">
+                    <input
+                      type="text"
+                      placeholder="e.g. Scroll reels, skip gym, procrastinate..."
+                      value={newNotTodoText}
+                      onChange={e => setNewNotTodoText(e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-red-200 rounded-xl text-xs outline-none focus:border-red-500 font-medium text-[#172554] bg-white"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#dc2626] hover:bg-[#b91c1c] shadow-sm transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                    >
+                      <FiPlus size={12} strokeWidth={3} /> Add
+                    </button>
+                  </form>
+
+                  {/* List */}
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                    {notTodos.length === 0 ? (
+                      <div className="h-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-red-200 rounded-2xl p-4 bg-red-50/30">
+                        <span className="text-2xl mb-1">🎯</span>
+                        <p className="text-xs font-bold text-[#172554]">Nothing here yet</p>
+                        <p className="text-[10px] text-[#64748b]">Add distractions & bad habits to avoid!</p>
+                      </div>
+                    ) : (
+                      notTodos.map((item, idx) => (
+                        <div
+                          key={item.id}
+                          className="p-3 rounded-xl border border-red-200 bg-white hover:border-red-400 hover:shadow-sm transition-all flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="w-5 h-5 rounded-full bg-red-100 border border-red-300 flex items-center justify-center shrink-0 text-[10px] font-extrabold text-red-500">
+                              {idx + 1}
+                            </div>
+                            <span className="text-xs font-semibold text-[#172554] truncate">{item.text}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-50 text-red-600 border border-red-200">AVOID</span>
+                            <button
+                              onClick={() => handleDeleteNotTodo(item.id)}
+                              className="p-1 text-[#94a3b8] hover:text-[#ef4444] rounded hover:bg-red-50 transition-all cursor-pointer"
+                            >
+                              <FiTrash2 size={11} />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Footer tip */}
+                  <div className="px-3 py-2 border-t border-red-100 bg-red-50/30 shrink-0">
+                    <p className="text-[10px] text-center text-[#b91c1c] font-medium">
+                      💡 Discipline = doing right things + avoiding wrong ones
+                    </p>
+                  </div>
+                </div>
+
               </div>
             )}
 
-            {/* TAB 3: MONTHLY EXPENSE VIEW */}
+            {/* TAB 4: MONTHLY EXPENSE VIEW */}
             {activeTab === 'MONTHLY EXP' && (
               <div className="p-6 w-full h-full flex flex-col md:flex-row gap-6 overflow-hidden">
 

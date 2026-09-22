@@ -54,6 +54,21 @@ export async function updateNote(id, payload) {
   if (!res.ok) throw new Error('Failed to update note');
 }
 
+// ── Upsert a day-block inside a note ─────────────────────────────────────────
+/**
+ * Creates or updates the block for a given date inside a note.
+ * @param {string} id - The note's MongoDB _id.
+ * @param {{ date: string, text: string }} payload - { date: 'YYYY-MM-DD', text }
+ */
+export async function upsertNoteBlock(id, payload) {
+  const res = await fetch(`${NOTES_API}/${id}/blocks`, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('Failed to save note block');
+}
+
 // ── Delete a note ────────────────────────────────────────
 /**
  * Deletes a note by its ID.

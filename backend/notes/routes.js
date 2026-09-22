@@ -72,6 +72,50 @@ router.put('/:id', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────
+// PUT /api/notes/:id/blocks
+// Upsert a date-block inside a specific note.
+// Body: { date: 'YYYY-MM-DD', text: string }
+// ─────────────────────────────────────────────────────────
+router.put('/:id/blocks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { date, text } = req.body;
+    if (!date) return res.status(400).json({ message: 'date is required' });
+
+    // Fetch the user's note document
+    const doc = await Note.findOne({ user: req.user.userId });
+    if (!doc) return res.status(404).json({ message: 'Note doc not found' });
+
+    const noteSubdoc = doc.notes.id(id);
+    if (!noteSubdoc) return res.status(404).json({ message: 'Note not found' });
+
+    const blockIdx = noteSubdoc.blocks.findIndex((b) => b.date === date);
+
+    if (blockIdx >= 0) {
+      // Block for this date already exists — update it
+      const existing = noteSubdoc.blocks[blockIdx];
+      const createdDay = existing.createdAt
+        ? new Date(existing.createdAt).toISOString().slice(0, 10)
+        : date;
+      noteSubdoc.blocks[blockIdx].text = text;
+      if (createdDay !== date) {
+        noteSubdoc.blocks[blockIdx].editedAt = new Date();
+      }
+    } else {
+      // No block for this date — push a new one
+      noteSubdoc.blocks.push({ date, text, createdAt: new Date(), editedAt: null });
+    }
+
+    doc.markModified('notes');
+    await doc.save();
+    res.json({ message: 'Block saved' });
+  } catch (error) {
+    console.error('Error saving note block:', error);
+    res.status(500).json({ message: 'Server error saving block' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
 // DELETE /api/notes/:id
 // Deletes a specific note by its ID.
 // ─────────────────────────────────────────────────────────
