@@ -202,16 +202,16 @@ export default function TrackerPage() {
         if (data.checked) {
           setChecked(data.checked);
         }
-        if (data.todos && data.todos.length > 0) {
+        if (data.todos !== undefined) {
           setTodos(data.todos);
         }
-        if (data.notTodos && data.notTodos.length > 0) {
+        if (data.notTodos !== undefined) {
           setNotTodos(data.notTodos);
         }
         if (data.monthlyBudget !== undefined && data.monthlyBudget !== null) {
           setMonthlyBudget(data.monthlyBudget);
         }
-        if (data.expenses && data.expenses.length > 0) {
+        if (data.expenses !== undefined) {
           setExpenses(data.expenses);
         }
       })

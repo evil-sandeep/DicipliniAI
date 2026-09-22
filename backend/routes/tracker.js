@@ -14,13 +14,14 @@ router.get('/', async (req, res) => {
     
     // If no tracker data exists yet, return empty defaults
     if (!trackerData) {
-      return res.json({ columns: [], checked: {}, todos: [], monthlyBudget: 0, expenses: [] });
+      return res.json({ columns: [], checked: {}, todos: [], notTodos: [], monthlyBudget: 0, expenses: [] });
     }
 
     res.json({
       columns: trackerData.columns,
       checked: Object.fromEntries(trackerData.checked || new Map()), // Convert Map to Object
       todos: trackerData.todos || [],
+      notTodos: trackerData.notTodos || [],
       monthlyBudget: trackerData.monthlyBudget || 0,
       expenses: trackerData.expenses || []
     });
@@ -33,7 +34,7 @@ router.get('/', async (req, res) => {
 // PUT (update) user's tracker data
 router.put('/', async (req, res) => {
   try {
-    const { columns, checked, todos, monthlyBudget, expenses } = req.body;
+    const { columns, checked, todos, notTodos, monthlyBudget, expenses } = req.body;
     
     // Convert checked object to Map format for Mongoose
     const checkedMap = new Map(Object.entries(checked || {}));
@@ -44,6 +45,7 @@ router.put('/', async (req, res) => {
       if (columns !== undefined) trackerData.columns = columns;
       if (checked !== undefined) trackerData.checked = checkedMap;
       if (todos !== undefined) trackerData.todos = todos;
+      if (notTodos !== undefined) trackerData.notTodos = notTodos;
       if (monthlyBudget !== undefined) trackerData.monthlyBudget = monthlyBudget;
       if (expenses !== undefined) trackerData.expenses = expenses;
       await trackerData.save();
@@ -53,6 +55,7 @@ router.put('/', async (req, res) => {
         columns: columns || [],
         checked: checkedMap,
         todos: todos || [],
+        notTodos: notTodos || [],
         monthlyBudget: monthlyBudget || 0,
         expenses: expenses || []
       });
