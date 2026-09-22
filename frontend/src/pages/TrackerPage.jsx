@@ -147,7 +147,7 @@ export default function TrackerPage() {
   ]);
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoCat, setNewTodoCat] = useState('Personal');
-  const [todoFilter, setTodoFilter] = useState('all');
+  const [todoFilter, setTodoFilter] = useState('active');
 
   // ── Not To-Do State ───────────────────────────────────
   const [notTodos, setNotTodos] = useState([]);
@@ -629,7 +629,7 @@ export default function TrackerPage() {
     if (todoFilter === 'active') return !t.completed;
     if (todoFilter === 'completed') return t.completed;
     return true;
-  });
+  }).sort((a, b) => Number(a.id) - Number(b.id));
   const completedTodosCount = todos.filter(t => t.completed).length;
 
   if (loadingData) {

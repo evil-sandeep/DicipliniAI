@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { FiFileText, FiLoader, FiPlus, FiEdit3 } from 'react-icons/fi';
 import { fetchAllNotes, createNote, updateNote, deleteNote, upsertNoteBlock } from './api';
 import { NewNotePrompt, NoteTitleEditor, NewNoteButton } from './NoteTitle';
@@ -31,7 +31,7 @@ function getNoteBlocks(note) {
   if (blocks.length === 0 && note.content) {
     blocks.push({ date: note.createdAt ? note.createdAt.slice(0, 10) : todayISO(), text: note.content, createdAt: note.createdAt, editedAt: null });
   }
-  return blocks.sort((a, b) => (a.date > b.date ? 1 : -1));
+  return blocks.sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 export default function MultiNotesSection() {
@@ -129,12 +129,12 @@ export default function MultiNotesSection() {
             notes.map((note) => {
               const isActive = note._id === selectedId;
               const nb = getNoteBlocks(note);
-              const last = nb[nb.length - 1];
+              const latest = nb[0];
               return (
                 <div key={note._id} onClick={() => setSelectedId(note._id)}
                   className={`group relative mx-2 my-0.5 px-3 py-2 rounded-xl cursor-pointer transition-all ${isActive ? 'bg-[#ede9fe] border border-[#c4b5fd]' : 'hover:bg-[#f1f5f9]'}`}>
                   <p className={`text-xs font-semibold truncate pr-5 ${isActive ? 'text-[#6d28d9]' : 'text-[#334155]'}`}>{note.title || 'Untitled Note'}</p>
-                  <p className="text-[10px] text-[#94a3b8] mt-0.5">{last ? formatDateShort(last.createdAt || note.updatedAt) : formatDateShort(note.updatedAt || note.createdAt)}</p>
+                  <p className="text-[10px] text-[#94a3b8] mt-0.5">{latest ? formatDateShort(latest.createdAt || note.updatedAt) : formatDateShort(note.updatedAt || note.createdAt)}</p>
                   <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <NoteDeleteButton noteTitle={note.title} onConfirmDelete={() => handleDeleteNote(note._id)} size="sm" />
                   </div>
@@ -154,22 +154,7 @@ export default function MultiNotesSection() {
               <NoteDeleteEditorButton noteTitle={selectedNote.title} onConfirmDelete={() => handleDeleteNote(selectedNote._id)} />
             </div>
             <div className="flex-1 overflow-y-auto px-8 py-5">
-              {pastBlocks.map((block) => (
-                <div key={block.date} className="mb-7">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-semibold text-[#94a3b8] tracking-wide select-none">{formatDateLine(block.date)}</span>
-                    {block.editedAt && (
-                      <span title="Edited" className="flex items-center gap-0.5 text-[10px] text-[#f59e0b]">
-                        <FiEdit3 size={9} /> edited
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap font-mono select-text">
-                    {block.text || <span className="text-[#c4c4c4] italic">Empty</span>}
-                  </p>
-                </div>
-              ))}
-              <div>
+              <div className="mb-7">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[11px] font-semibold text-[#8b5cf6] tracking-wide select-none">{formatDateLine(today)}</span>
                   {saveStatus === 'saving' && <span className="text-[10px] text-[#94a3b8]">saving…</span>}
@@ -185,6 +170,21 @@ export default function MultiNotesSection() {
                   autoFocus
                 />
               </div>
+              {pastBlocks.map((block) => (
+                <div key={block.date} className="mb-7">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-semibold text-[#94a3b8] tracking-wide select-none">{formatDateLine(block.date)}</span>
+                    {block.editedAt && (
+                      <span title="Edited" className="flex items-center gap-0.5 text-[10px] text-[#f59e0b]">
+                        <FiEdit3 size={9} /> edited
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-[#334155] leading-relaxed whitespace-pre-wrap font-mono select-text">
+                    {block.text || <span className="text-[#c4c4c4] italic">Empty</span>}
+                  </p>
+                </div>
+              ))}
             </div>
           </>
         ) : (
