@@ -47,7 +47,7 @@ function SeamlessNoteBlock({ block, isToday, value, onChange, saveStatus }) {
   const adjustHeight = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${Math.max(isToday ? 120 : 60, textareaRef.current.scrollHeight)}px`;
+      textareaRef.current.style.height = `${Math.max(isToday ? 44 : 28, textareaRef.current.scrollHeight)}px`;
     }
   };
 
@@ -56,8 +56,8 @@ function SeamlessNoteBlock({ block, isToday, value, onChange, saveStatus }) {
   }, [value]);
 
   return (
-    <div className="mb-8 last:mb-4 border-b border-dashed border-[#f1f5f9] pb-6 last:border-none">
-      <div className="flex items-center gap-2 mb-2 select-none">
+    <div className="mb-4 last:mb-2 border-b border-dashed border-[#e2e8f0] pb-3 last:border-none">
+      <div className="flex items-center gap-2 mb-1.5 select-none">
         <span className={`text-[11px] font-bold tracking-wide ${isToday ? 'text-[#8b5cf6]' : 'text-[#64748b]'}`}>
           {formatDateLine(block.date)}
         </span>
@@ -92,7 +92,7 @@ function SeamlessNoteBlock({ block, isToday, value, onChange, saveStatus }) {
         className={`w-full text-sm font-mono leading-relaxed bg-transparent border-none outline-none resize-none p-0 overflow-hidden transition-colors ${
           isToday ? 'text-[#172554] placeholder-[#cbd5e1]' : 'text-[#334155] placeholder-[#d1d5db]'
         }`}
-        style={{ minHeight: isToday ? 120 : 60 }}
+        style={{ minHeight: isToday ? 44 : 28 }}
       />
     </div>
   );
