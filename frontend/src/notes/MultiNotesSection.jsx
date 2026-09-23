@@ -116,8 +116,11 @@ export default function MultiNotesSection() {
   useEffect(() => {
     fetchAllNotes()
       .then((fetched) => {
-        setNotes(fetched);
-        if (fetched.length > 0) setSelectedId(fetched[0]._id);
+        const sorted = [...fetched].sort(
+          (a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0)
+        );
+        setNotes(sorted);
+        if (sorted.length > 0) setSelectedId(sorted[0]._id);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -136,25 +139,26 @@ export default function MultiNotesSection() {
     saveTimersRef.current[timerKey] = setTimeout(async () => {
       try {
         await upsertNoteBlock(noteId, { date: dateStr, text });
-        setNotes((prev) =>
-          prev.map((n) => {
-            if (n._id !== noteId) return n;
-            const existingBlocks = getNoteBlocks(n);
-            const idx = existingBlocks.findIndex((b) => b.date === dateStr);
-            let updatedBlocks;
-            if (idx >= 0) {
-              updatedBlocks = existingBlocks.map((b) =>
-                b.date === dateStr ? { ...b, text, editedAt: new Date().toISOString() } : b
-              );
-            } else {
-              updatedBlocks = [
-                ...existingBlocks,
-                { date: dateStr, text, createdAt: new Date().toISOString(), editedAt: null },
-              ];
-            }
-            return { ...n, blocks: updatedBlocks };
-          })
-        );
+        setNotes((prev) => {
+          const target = prev.find((n) => n._id === noteId);
+          if (!target) return prev;
+          const existingBlocks = getNoteBlocks(target);
+          const idx = existingBlocks.findIndex((b) => b.date === dateStr);
+          let updatedBlocks;
+          if (idx >= 0) {
+            updatedBlocks = existingBlocks.map((b) =>
+              b.date === dateStr ? { ...b, text, editedAt: new Date().toISOString() } : b
+            );
+          } else {
+            updatedBlocks = [
+              ...existingBlocks,
+              { date: dateStr, text, createdAt: new Date().toISOString(), editedAt: null },
+            ];
+          }
+          const updatedNote = { ...target, blocks: updatedBlocks, updatedAt: new Date().toISOString() };
+          const remaining = prev.filter((n) => n._id !== noteId);
+          return [updatedNote, ...remaining];
+        });
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 2000);
       } catch (err) {
@@ -179,7 +183,13 @@ export default function MultiNotesSection() {
 
   const handleTitleChange = (newTitle) => {
     if (!selectedId) return;
-    setNotes((prev) => prev.map((n) => (n._id === selectedId ? { ...n, title: newTitle } : n)));
+    setNotes((prev) => {
+      const target = prev.find((n) => n._id === selectedId);
+      if (!target) return prev;
+      const updatedNote = { ...target, title: newTitle, updatedAt: new Date().toISOString() };
+      const remaining = prev.filter((n) => n._id !== selectedId);
+      return [updatedNote, ...remaining];
+    });
     setSaveStatus('saving');
     updateNote(selectedId, { title: newTitle })
       .then(() => {

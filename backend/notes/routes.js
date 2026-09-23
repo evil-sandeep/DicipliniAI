@@ -9,12 +9,14 @@ router.use(requireAuth);
 
 // ─────────────────────────────────────────────────────────
 // GET /api/notes
-// Returns all notes for the authenticated user.
+// Returns all notes for the authenticated user (sorted by latest updated first).
 // ─────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
     const doc = await Note.findOne({ user: req.user.userId });
-    res.json({ notes: doc?.notes || [] });
+    const notes = doc?.notes ? [...doc.notes] : [];
+    notes.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+    res.json({ notes });
   } catch (error) {
     console.error('Error fetching notes:', error);
     res.status(500).json({ message: 'Server error fetching notes' });
@@ -55,7 +57,7 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, content } = req.body;
 
-    const updateFields = {};
+    const updateFields = { 'notes.$.updatedAt': new Date() };
     if (title !== undefined) updateFields['notes.$.title'] = title;
     if (content !== undefined) updateFields['notes.$.content'] = content;
 
@@ -88,6 +90,9 @@ router.put('/:id/blocks', async (req, res) => {
 
     const noteSubdoc = doc.notes.id(id);
     if (!noteSubdoc) return res.status(404).json({ message: 'Note not found' });
+
+    // Update updatedAt timestamp of note
+    noteSubdoc.updatedAt = new Date();
 
     // Migrate legacy content to a block if blocks array is empty
     if ((!noteSubdoc.blocks || noteSubdoc.blocks.length === 0) && noteSubdoc.content) {
